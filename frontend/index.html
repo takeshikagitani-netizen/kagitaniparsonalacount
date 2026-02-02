@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>領収書仕訳システム</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success-color: #16a34a;
+            --danger-color: #dc2626;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Hiragino Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding-bottom: 80px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        header {
+            background: var(--primary-color);
+            color: white;
+            padding: 16px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .tabs {
+            display: flex;
+            background: var(--card-bg);
+            border-radius: 8px;
+            margin: 16px 0;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-color);
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary-color);
+            background: #eff6ff;
+        }
+
+        .upload-area input {
+            display: none;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: var(--text-muted);
+        }
+
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1rem;
+            background: white;
+        }
+
+        .form-group select:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-primary:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+
+        .btn-outline:hover {
+            background: var(--bg-color);
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.875rem;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            margin-top: 12px;
+        }
+
+        .result-section {
+            display: none;
+        }
+
+        .result-section.show {
+            display: block;
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .data-item {
+            padding: 12px;
+            background: var(--bg-color);
+            border-radius: 6px;
+        }
+
+        .data-item label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .data-item .value {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .journal-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        .journal-table th,
+        .journal-table td {
+            padding: 10px 8px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .journal-table th {
+            background: var(--bg-color);
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .journal-row {
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .journal-row:hover {
+            background: #f1f5f9;
+        }
+
+        .journal-row.confirmed {
+            background: #f0fdf4;
+        }
+
+        .amount {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-confirmed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .message.show {
+            display: block;
+        }
+
+        .message.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .message.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .actions .btn {
+            flex: 1;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+        }
+
+        .section-hidden {
+            display: none;
+        }
+
+        .ocr-text {
+            font-family: monospace;
+            font-size: 0.8rem;
+            white-space: pre-wrap;
+            background: #f1f5f9;
+            padding: 12px;
+            border-radius: 6px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        @media (max-width: 480px) {
+            .data-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .journal-table {
+                font-size: 0.8rem;
+            }
+
+            .journal-table th,
+            .journal-table td {
+                padding: 8px 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>領収書仕訳システム</h1>
+    </header>
+
+    <div class="container">
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" data-tab="upload">アップロード</button>
+            <button class="tab" data-tab="list">仕訳一覧</button>
+        </div>
+
+        <!-- Messages -->
+        <div id="message" class="message"></div>
+
+        <!-- Upload Section -->
+        <section id="upload-section">
+            <div class="card">
+                <h2 class="card-title">領収書/請求書をアップロード</h2>
+
+                <div class="upload-area" id="upload-area">
+                    <input type="file" id="file-input" accept="image/*,.pdf" capture="environment">
+                    <div class="upload-icon">📷</div>
+                    <p>タップして撮影 または ファイルを選択</p>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">
+                        JPEG, PNG, PDF (最大10MB)
+                    </p>
+                </div>
+
+                <img id="preview" class="preview-image" style="display: none;">
+
+                <div class="form-group" style="margin-top: 16px;">
+                    <label for="payment-method">支払方法</label>
+                    <select id="payment-method">
+                        <option value="クレジットカード">クレジットカード</option>
+                        <option value="現金">現金</option>
+                        <option value="銀行振込">銀行振込</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-primary" id="upload-btn" disabled>
+                    アップロードして解析
+                </button>
+            </div>
+
+            <!-- Dummy Data for Testing -->
+            <div class="card">
+                <h2 class="card-title">テスト用ダミーデータ</h2>
+                <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 16px;">
+                    画像なしでシステムをテストできます
+                </p>
+                <div class="form-group">
+                    <label for="dummy-vendor">取引先</label>
+                    <input type="text" id="dummy-vendor" value="スターバックス 渋谷店">
+                </div>
+                <div class="form-group">
+                    <label for="dummy-amount">金額（税込）</label>
+                    <input type="number" id="dummy-amount" value="550">
+                </div>
+                <div class="form-group">
+                    <label for="dummy-date">日付</label>
+                    <input type="date" id="dummy-date">
+                </div>
+                <div class="form-group">
+                    <label for="dummy-description">摘要</label>
+                    <input type="text" id="dummy-description" value="打ち合わせ コーヒー">
+                </div>
+                <div class="form-group">
+                    <label for="dummy-payment">支払方法</label>
+                    <select id="dummy-payment">
+                        <option value="クレジットカード">クレジットカード</option>
+                        <option value="現金">現金</option>
+                        <option value="銀行振込">銀行振込</option>
+                    </select>
+                </div>
+                <button class="btn btn-outline" id="dummy-btn">
+                    ダミーデータで登録
+                </button>
+            </div>
+
+            <!-- Loading -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>解析中...</p>
+            </div>
+
+            <!-- Result Section -->
+            <div class="result-section" id="result-section">
+                <div class="card">
+                    <h2 class="card-title">抽出データ</h2>
+                    <div class="data-grid" id="extracted-data">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2 class="card-title">仕訳案</h2>
+                    <div class="data-grid" id="journal-data">
+                        <!-- Populated by JS -->
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-success" id="confirm-btn">確定</button>
+                        <button class="btn btn-outline" id="edit-btn">編集</button>
+                    </div>
+                </div>
+
+                <div class="card" id="ocr-card" style="display: none;">
+                    <h2 class="card-title">OCRテキスト</h2>
+                    <pre class="ocr-text" id="ocr-text"></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- List Section -->
+        <section id="list-section" class="section-hidden">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h2 class="card-title" style="margin-bottom: 0;">仕訳一覧</h2>
+                    <button class="btn btn-primary btn-sm" id="export-btn">CSV出力</button>
+                </div>
+
+                <div id="journal-list">
+                    <div class="empty-state">
+                        <p>仕訳データがありません</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // API Base URL
+        const API_BASE = '/api';
+
+        // State
+        let currentFile = null;
+        let currentJournalId = null;
+        let accountOptions = null;
+
+        // DOM Elements
+        const tabs = document.querySelectorAll('.tab');
+        const uploadSection = document.getElementById('upload-section');
+        const listSection = document.getElementById('list-section');
+        const fileInput = document.getElementById('file-input');
+        const uploadArea = document.getElementById('upload-area');
+        const preview = document.getElementById('preview');
+        const uploadBtn = document.getElementById('upload-btn');
+        const loading = document.getElementById('loading');
+        const resultSection = document.getElementById('result-section');
+        const messageDiv = document.getElementById('message');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set default date to today
+            document.getElementById('dummy-date').valueAsDate = new Date();
+
+            // Load account options
+            loadAccountOptions();
+
+            // Load journal list
+            loadJournalList();
+        });
+
+        // Tab switching
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                const tabName = tab.dataset.tab;
+                if (tabName === 'upload') {
+                    uploadSection.classList.remove('section-hidden');
+                    listSection.classList.add('section-hidden');
+                } else {
+                    uploadSection.classList.add('section-hidden');
+                    listSection.classList.remove('section-hidden');
+                    loadJournalList();
+                }
+            });
+        });
+
+        // File upload handling
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            // Validate file size (10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                showMessage('ファイルサイズが大きすぎます（最大10MB）', 'error');
+                return;
+            }
+
+            currentFile = file;
+            uploadBtn.disabled = false;
+
+            // Show preview for images
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.style.display = 'none';
+            }
+        }
+
+        // Upload button
+        uploadBtn.addEventListener('click', async () => {
+            if (!currentFile) return;
+
+            const formData = new FormData();
+            formData.append('file', currentFile);
+            formData.append('payment_method', document.getElementById('payment-method').value);
+
+            loading.classList.add('show');
+            resultSection.classList.remove('show');
+
+            try {
+                const response = await fetch(`${API_BASE}/receipts/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'アップロードに失敗しました');
+                }
+
+                const data = await response.json();
+                showResult(data);
+                showMessage('解析が完了しました', 'success');
+
+            } catch (error) {
+                showMessage(error.message, 'error');
+            } finally {
+                loading.classList.remove('show');
+            }
+        });
+
+        // Dummy data button
+        document.getElementById('dummy-btn').addEventListener('click', async () => {
+            const dummyData = {
+                vendor_name: document.getElementById('dummy-vendor').value,
+                amount: parseFloat(document.getElementById('dummy-amount').value),
+                date: document.getElementById('dummy-date').value,
+                description: document.getElementById('dummy-description').value,
+                payment_method: document.getElementById('dummy-payment').value
+            };
+
+            loading.classList.add('show');
+            resultSection.classList.remove('show');
+
+            try {
+                const response = await fetch(`${API_BASE}/receipts/dummy`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dummyData)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || '登録に失敗しました');
+                }
+
+                const data = await response.json();
+                showResult(data);
+                showMessage('ダミーデータを登録しました', 'success');
+
+            } catch (error) {
+                showMessage(error.message, 'error');
+            } finally {
+                loading.classList.remove('show');
+            }
+        });
+
+        // Show result
+        function showResult(data) {
+            const { receipt, journal_entry } = data;
+            currentJournalId = journal_entry.id;
+
+            // Extracted data
+            document.getElementById('extracted-data').innerHTML = `
+                <div class="data-item">
+                    <label>日付</label>
+                    <div class="value">${receipt.extracted_date || '不明'}</div>
+                </div>
+                <div class="data-item">
+                    <label>金額（税込）</label>
+                    <div class="value">${receipt.amount_total ? '¥' + receipt.amount_total.toLocaleString() : '不明'}</div>
+                </div>
+                <div class="data-item">
+                    <label>取引先</label>
+                    <div class="value">${receipt.vendor_name || '不明'}</div>
+                </div>
+                <div class="data-item">
+                    <label>摘要</label>
+                    <div class="value">${receipt.description || '不明'}</div>
+                </div>
+            `;
+
+            // Journal entry
+            document.getElementById('journal-data').innerHTML = `
+                <div class="data-item">
+                    <label>借方科目</label>
+                    <div class="value">${journal_entry.debit_account}</div>
+                </div>
+                <div class="data-item">
+                    <label>貸方科目</label>
+                    <div class="value">${journal_entry.credit_account}</div>
+                </div>
+                <div class="data-item">
+                    <label>金額</label>
+                    <div class="value">¥${journal_entry.amount.toLocaleString()}</div>
+                </div>
+                <div class="data-item">
+                    <label>税区分</label>
+                    <div class="value">${journal_entry.tax_category || '-'}</div>
+                </div>
+            `;
+
+            // OCR text (if available)
+            if (receipt.ocr_text) {
+                document.getElementById('ocr-text').textContent = receipt.ocr_text;
+                document.getElementById('ocr-card').style.display = 'block';
+            } else {
+                document.getElementById('ocr-card').style.display = 'none';
+            }
+
+            resultSection.classList.add('show');
+        }
+
+        // Confirm button
+        document.getElementById('confirm-btn').addEventListener('click', async () => {
+            if (!currentJournalId) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/journals/${currentJournalId}/confirm`, {
+                    method: 'POST'
+                });
+
+                if (!response.ok) {
+                    throw new Error('確定に失敗しました');
+                }
+
+                showMessage('仕訳を確定しました', 'success');
+
+                // Reset form
+                currentFile = null;
+                currentJournalId = null;
+                fileInput.value = '';
+                preview.style.display = 'none';
+                uploadBtn.disabled = true;
+                resultSection.classList.remove('show');
+
+            } catch (error) {
+                showMessage(error.message, 'error');
+            }
+        });
+
+        // Load account options
+        async function loadAccountOptions() {
+            try {
+                const response = await fetch(`${API_BASE}/journals/accounts`);
+                accountOptions = await response.json();
+            } catch (error) {
+                console.error('Failed to load account options:', error);
+            }
+        }
+
+        // Load journal list
+        async function loadJournalList() {
+            try {
+                const response = await fetch(`${API_BASE}/journals/`);
+                const entries = await response.json();
+
+                const listDiv = document.getElementById('journal-list');
+
+                if (entries.length === 0) {
+                    listDiv.innerHTML = `
+                        <div class="empty-state">
+                            <p>仕訳データがありません</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                listDiv.innerHTML = `
+                    <table class="journal-table">
+                        <thead>
+                            <tr>
+                                <th>日付</th>
+                                <th>借方</th>
+                                <th>金額</th>
+                                <th>状態</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${entries.map(entry => `
+                                <tr class="journal-row ${entry.is_confirmed ? 'confirmed' : ''}" data-id="${entry.id}">
+                                    <td>${entry.transaction_date}</td>
+                                    <td>${entry.debit_account}</td>
+                                    <td class="amount">¥${entry.amount.toLocaleString()}</td>
+                                    <td>
+                                        <span class="status-badge ${entry.is_confirmed ? 'status-confirmed' : 'status-pending'}">
+                                            ${entry.is_confirmed ? '確定' : '未確定'}
+                                        </span>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+
+            } catch (error) {
+                console.error('Failed to load journal list:', error);
+            }
+        }
+
+        // Export CSV
+        document.getElementById('export-btn').addEventListener('click', () => {
+            window.location.href = `${API_BASE}/journals/export/csv`;
+        });
+
+        // Show message
+        function showMessage(text, type) {
+            messageDiv.textContent = text;
+            messageDiv.className = `message show ${type}`;
+
+            setTimeout(() => {
+                messageDiv.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
