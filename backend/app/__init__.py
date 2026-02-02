@@ -1,0 +1,1 @@
+"""Receipt Accounting Backend Application."""
