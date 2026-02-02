@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ユーザーコレクション
+    // - 自分のドキュメントのみ読み書き可能
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // 仕訳コレクション
+    // - 自分の仕訳のみ読み書き可能
+    match /journals/{journalId} {
+      allow read, write: if request.auth != null
+                         && resource.data.user_id == request.auth.uid;
+      allow create: if request.auth != null
+                    && request.resource.data.user_id == request.auth.uid;
+    }
+
+    // 領収書コレクション（将来の拡張用）
+    match /receipts/{receiptId} {
+      allow read, write: if request.auth != null
+                         && resource.data.user_id == request.auth.uid;
+      allow create: if request.auth != null
+                    && request.resource.data.user_id == request.auth.uid;
+    }
+  }
+}

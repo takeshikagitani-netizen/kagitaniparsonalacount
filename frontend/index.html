@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>領収書仕訳システム</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #4A90E2;
+            --primary-dark: #2E5BBA;
+            --success: #4CAF50;
+            --warning: #FF9800;
+            --danger: #F44336;
+            --bg-light: #F5F7FA;
+            --bg-white: #FFFFFF;
+            --text-dark: #333333;
+            --text-light: #666666;
+            --border-color: #E0E0E0;
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: var(--bg-light);
+            min-height: 100vh;
+            color: var(--text-dark);
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        .user-name {
+            font-size: 0.9rem;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-google {
+            background-color: white;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-google:hover {
+            background-color: #f5f5f5;
+        }
+
+        .btn-logout {
+            background-color: transparent;
+            color: white;
+            border: 1px solid white;
+            padding: 8px 16px;
+        }
+
+        .btn-logout:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #43A047;
+        }
+
+        .btn-warning {
+            background-color: var(--warning);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background-color: #F57C00;
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #D32F2F;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Login Screen */
+        .login-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 80px);
+            padding: 20px;
+        }
+
+        .login-card {
+            background: white;
+            padding: 48px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .login-card h2 {
+            margin-bottom: 16px;
+            color: var(--text-dark);
+        }
+
+        .login-card p {
+            color: var(--text-light);
+            margin-bottom: 32px;
+        }
+
+        .google-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* Upload Section */
+        .upload-section {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .upload-section h2 {
+            margin-bottom: 24px;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 48px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover,
+        .upload-area.dragover {
+            border-color: var(--primary);
+            background-color: rgba(74, 144, 226, 0.05);
+        }
+
+        .upload-area input[type="file"] {
+            display: none;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .upload-text {
+            color: var(--text-light);
+            margin-bottom: 16px;
+        }
+
+        .upload-text strong {
+            color: var(--primary);
+        }
+
+        .file-preview {
+            margin-top: 24px;
+            display: none;
+        }
+
+        .file-preview.show {
+            display: block;
+        }
+
+        .preview-image {
+            max-width: 300px;
+            max-height: 200px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .file-name {
+            color: var(--text-dark);
+            margin-bottom: 16px;
+        }
+
+        .upload-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        /* Result Section */
+        .result-section {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+            display: none;
+        }
+
+        .result-section.show {
+            display: block;
+        }
+
+        .result-section h2 {
+            margin-bottom: 24px;
+            color: var(--text-dark);
+        }
+
+        .journal-card {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        .journal-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .journal-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .journal-field label {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .journal-field input,
+        .journal-field select {
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        .journal-field input:focus,
+        .journal-field select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+
+        /* Journals List */
+        .journals-section {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: var(--shadow);
+        }
+
+        .journals-section h2 {
+            margin-bottom: 24px;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .journals-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .journals-table th,
+        .journals-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .journals-table th {
+            background-color: var(--bg-light);
+            font-weight: 600;
+            color: var(--text-light);
+            font-size: 0.85rem;
+        }
+
+        .journals-table tr:hover {
+            background-color: rgba(74, 144, 226, 0.05);
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-pending {
+            background-color: #FFF3E0;
+            color: #E65100;
+        }
+
+        .status-confirmed {
+            background-color: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 48px;
+            color: var(--text-light);
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        /* Loading */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 24px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 16px 24px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            box-shadow: var(--shadow);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            background-color: var(--success);
+        }
+
+        .toast.error {
+            background-color: var(--danger);
+        }
+
+        .toast.warning {
+            background-color: var(--warning);
+        }
+
+        /* Hidden */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 12px;
+                text-align: center;
+            }
+
+            .journal-row {
+                grid-template-columns: 1fr;
+            }
+
+            .upload-actions,
+            .result-actions {
+                flex-direction: column;
+            }
+
+            .journals-table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1>領収書仕訳システム</h1>
+        <div class="user-info" id="userInfo">
+            <!-- Dynamic content -->
+        </div>
+    </header>
+
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-card">
+            <h2>ようこそ</h2>
+            <p>Googleアカウントでログインして<br>領収書の仕訳を始めましょう</p>
+            <button class="btn btn-google" id="loginBtn">
+                <svg class="google-icon" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Googleでログイン
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container hidden" id="mainContent">
+        <!-- Upload Section -->
+        <section class="upload-section">
+            <h2>領収書をアップロード</h2>
+            <div class="upload-area" id="uploadArea">
+                <input type="file" id="fileInput" accept="image/*,.pdf">
+                <div class="upload-icon">📄</div>
+                <p class="upload-text">
+                    ファイルをドラッグ&ドロップ<br>
+                    または<strong>クリックして選択</strong>
+                </p>
+                <p style="font-size: 0.85rem; color: #999;">対応形式: JPG, PNG, PDF</p>
+            </div>
+            <div class="file-preview" id="filePreview">
+                <img class="preview-image" id="previewImage" src="" alt="プレビュー">
+                <p class="file-name" id="fileName"></p>
+                <div class="upload-actions">
+                    <button class="btn btn-primary" id="analyzeBtn">仕訳を生成</button>
+                    <button class="btn" style="background: #eee; color: #666;" id="clearBtn">クリア</button>
+                </div>
+            </div>
+            <div class="loading" id="uploadLoading">
+                <div class="spinner"></div>
+                <p>領収書を解析中...</p>
+            </div>
+        </section>
+
+        <!-- Result Section -->
+        <section class="result-section" id="resultSection">
+            <h2>仕訳結果</h2>
+            <div class="journal-card" id="journalCard">
+                <div class="journal-row">
+                    <div class="journal-field">
+                        <label>日付</label>
+                        <input type="date" id="journalDate">
+                    </div>
+                    <div class="journal-field">
+                        <label>金額</label>
+                        <input type="number" id="journalAmount" placeholder="0">
+                    </div>
+                    <div class="journal-field">
+                        <label>税区分</label>
+                        <select id="journalTax">
+                            <option value="10">10% (標準税率)</option>
+                            <option value="8">8% (軽減税率)</option>
+                            <option value="0">非課税</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="journal-row">
+                    <div class="journal-field">
+                        <label>借方科目</label>
+                        <select id="journalDebit">
+                            <option value="消耗品費">消耗品費</option>
+                            <option value="旅費交通費">旅費交通費</option>
+                            <option value="交際費">交際費</option>
+                            <option value="会議費">会議費</option>
+                            <option value="通信費">通信費</option>
+                            <option value="水道光熱費">水道光熱費</option>
+                            <option value="地代家賃">地代家賃</option>
+                            <option value="広告宣伝費">広告宣伝費</option>
+                            <option value="福利厚生費">福利厚生費</option>
+                            <option value="雑費">雑費</option>
+                        </select>
+                    </div>
+                    <div class="journal-field">
+                        <label>貸方科目</label>
+                        <select id="journalCredit">
+                            <option value="現金">現金</option>
+                            <option value="普通預金">普通預金</option>
+                            <option value="クレジットカード">クレジットカード</option>
+                            <option value="未払金">未払金</option>
+                        </select>
+                    </div>
+                    <div class="journal-field">
+                        <label>摘要</label>
+                        <input type="text" id="journalDescription" placeholder="取引内容">
+                    </div>
+                </div>
+            </div>
+            <div class="result-actions">
+                <button class="btn" style="background: #eee; color: #666;" id="cancelResultBtn">キャンセル</button>
+                <button class="btn btn-success" id="confirmBtn">仕訳を保存</button>
+            </div>
+            <div class="loading" id="confirmLoading">
+                <div class="spinner"></div>
+                <p>保存中...</p>
+            </div>
+        </section>
+
+        <!-- Journals List -->
+        <section class="journals-section">
+            <h2>
+                <span>仕訳一覧</span>
+                <button class="btn btn-primary" id="refreshBtn">更新</button>
+            </h2>
+            <div class="loading" id="listLoading">
+                <div class="spinner"></div>
+                <p>読み込み中...</p>
+            </div>
+            <table class="journals-table" id="journalsTable">
+                <thead>
+                    <tr>
+                        <th>日付</th>
+                        <th>借方科目</th>
+                        <th>貸方科目</th>
+                        <th>金額</th>
+                        <th>摘要</th>
+                        <th>ステータス</th>
+                    </tr>
+                </thead>
+                <tbody id="journalsBody">
+                    <!-- Dynamic content -->
+                </tbody>
+            </table>
+            <div class="empty-state hidden" id="emptyState">
+                <div class="empty-icon">📋</div>
+                <p>まだ仕訳がありません</p>
+            </div>
+        </section>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+    <script>
+        // ===========================================
+        // Firebase Configuration
+        // ===========================================
+        // TODO: 以下のfirebaseConfigを自分のFirebaseプロジェクトの値に置き換えてください
+        // Firebase Console → プロジェクト設定 → 全般 → マイアプリ → Firebase SDK snippet
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        // ===========================================
+        // API Configuration
+        // ===========================================
+        const API_BASE = 'http://localhost:8000';
+
+        // ===========================================
+        // State
+        // ===========================================
+        let currentUser = null;
+        let idToken = null;
+        let selectedFile = null;
+        let currentJournalId = null;
+
+        // ===========================================
+        // DOM Elements
+        // ===========================================
+        const loginScreen = document.getElementById('loginScreen');
+        const mainContent = document.getElementById('mainContent');
+        const userInfo = document.getElementById('userInfo');
+        const loginBtn = document.getElementById('loginBtn');
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const filePreview = document.getElementById('filePreview');
+        const previewImage = document.getElementById('previewImage');
+        const fileName = document.getElementById('fileName');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const uploadLoading = document.getElementById('uploadLoading');
+        const resultSection = document.getElementById('resultSection');
+        const confirmBtn = document.getElementById('confirmBtn');
+        const cancelResultBtn = document.getElementById('cancelResultBtn');
+        const confirmLoading = document.getElementById('confirmLoading');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const journalsBody = document.getElementById('journalsBody');
+        const journalsTable = document.getElementById('journalsTable');
+        const emptyState = document.getElementById('emptyState');
+        const listLoading = document.getElementById('listLoading');
+        const toast = document.getElementById('toast');
+
+        // ===========================================
+        // Auth Functions
+        // ===========================================
+
+        // Auth state listener
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                currentUser = user;
+                idToken = await user.getIdToken();
+                showMainContent();
+                loadJournals();
+            } else {
+                currentUser = null;
+                idToken = null;
+                showLoginScreen();
+            }
+        });
+
+        // Google login
+        loginBtn.addEventListener('click', async () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            try {
+                await auth.signInWithPopup(provider);
+                showToast('ログインしました', 'success');
+            } catch (error) {
+                console.error('Login error:', error);
+                showToast('ログインに失敗しました: ' + error.message, 'error');
+            }
+        });
+
+        // Logout
+        async function logout() {
+            try {
+                await auth.signOut();
+                showToast('ログアウトしました', 'success');
+            } catch (error) {
+                console.error('Logout error:', error);
+                showToast('ログアウトに失敗しました', 'error');
+            }
+        }
+
+        // Get fresh ID token
+        async function getIdToken() {
+            if (currentUser) {
+                idToken = await currentUser.getIdToken(true);
+                return idToken;
+            }
+            return null;
+        }
+
+        // ===========================================
+        // UI Functions
+        // ===========================================
+
+        function showLoginScreen() {
+            loginScreen.classList.remove('hidden');
+            mainContent.classList.add('hidden');
+            userInfo.innerHTML = '';
+        }
+
+        function showMainContent() {
+            loginScreen.classList.add('hidden');
+            mainContent.classList.remove('hidden');
+
+            // Update user info in header
+            userInfo.innerHTML = `
+                <img class="user-avatar" src="${currentUser.photoURL || 'https://via.placeholder.com/40'}" alt="avatar">
+                <span class="user-name">${currentUser.displayName || currentUser.email}</span>
+                <button class="btn btn-logout" onclick="logout()">ログアウト</button>
+            `;
+        }
+
+        function showToast(message, type = 'success') {
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('ja-JP', {
+                style: 'currency',
+                currency: 'JPY'
+            }).format(amount);
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ja-JP');
+        }
+
+        // ===========================================
+        // File Upload Functions
+        // ===========================================
+
+        // Click to upload
+        uploadArea.addEventListener('click', () => {
+            if (!selectedFile) {
+                fileInput.click();
+            }
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        });
+
+        function handleFile(file) {
+            // Validate file type
+            const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
+            if (!validTypes.includes(file.type)) {
+                showToast('対応していないファイル形式です', 'error');
+                return;
+            }
+
+            // Validate file size (max 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                showToast('ファイルサイズが大きすぎます（最大10MB）', 'error');
+                return;
+            }
+
+            selectedFile = file;
+            fileName.textContent = file.name;
+
+            // Show preview for images
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    previewImage.src = e.target.result;
+                    previewImage.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                previewImage.style.display = 'none';
+            }
+
+            filePreview.classList.add('show');
+        }
+
+        // Clear file
+        clearBtn.addEventListener('click', () => {
+            clearFileSelection();
+        });
+
+        function clearFileSelection() {
+            selectedFile = null;
+            fileInput.value = '';
+            filePreview.classList.remove('show');
+            previewImage.src = '';
+            previewImage.style.display = 'none';
+            fileName.textContent = '';
+        }
+
+        // ===========================================
+        // API Functions
+        // ===========================================
+
+        // Analyze receipt (upload and get journal entry)
+        analyzeBtn.addEventListener('click', async () => {
+            if (!selectedFile) {
+                showToast('ファイルを選択してください', 'warning');
+                return;
+            }
+
+            analyzeBtn.disabled = true;
+            uploadLoading.classList.add('show');
+
+            try {
+                const token = await getIdToken();
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+
+                const response = await fetch(`${API_BASE}/api/upload`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'アップロードに失敗しました');
+                }
+
+                const data = await response.json();
+
+                // Store journal ID
+                currentJournalId = data.journal_id;
+
+                // Fill form with extracted data
+                document.getElementById('journalDate').value = data.date || new Date().toISOString().split('T')[0];
+                document.getElementById('journalAmount').value = data.amount || 0;
+                document.getElementById('journalTax').value = data.tax_rate || '10';
+                document.getElementById('journalDebit').value = data.debit_account || '消耗品費';
+                document.getElementById('journalCredit').value = data.credit_account || '現金';
+                document.getElementById('journalDescription').value = data.description || '';
+
+                // Show result section
+                resultSection.classList.add('show');
+                showToast('領収書の解析が完了しました', 'success');
+
+            } catch (error) {
+                console.error('Upload error:', error);
+                showToast(error.message, 'error');
+            } finally {
+                analyzeBtn.disabled = false;
+                uploadLoading.classList.remove('show');
+            }
+        });
+
+        // Cancel result
+        cancelResultBtn.addEventListener('click', () => {
+            resultSection.classList.remove('show');
+            currentJournalId = null;
+            clearFileSelection();
+        });
+
+        // Confirm journal entry
+        confirmBtn.addEventListener('click', async () => {
+            confirmBtn.disabled = true;
+            confirmLoading.classList.add('show');
+
+            try {
+                const token = await getIdToken();
+
+                const journalData = {
+                    journal_id: currentJournalId,
+                    date: document.getElementById('journalDate').value,
+                    amount: parseInt(document.getElementById('journalAmount').value) || 0,
+                    tax_rate: parseInt(document.getElementById('journalTax').value),
+                    debit_account: document.getElementById('journalDebit').value,
+                    credit_account: document.getElementById('journalCredit').value,
+                    description: document.getElementById('journalDescription').value
+                };
+
+                const response = await fetch(`${API_BASE}/api/journals/confirm`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(journalData)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || '保存に失敗しました');
+                }
+
+                showToast('仕訳を保存しました', 'success');
+
+                // Reset
+                resultSection.classList.remove('show');
+                currentJournalId = null;
+                clearFileSelection();
+
+                // Refresh list
+                loadJournals();
+
+            } catch (error) {
+                console.error('Confirm error:', error);
+                showToast(error.message, 'error');
+            } finally {
+                confirmBtn.disabled = false;
+                confirmLoading.classList.remove('show');
+            }
+        });
+
+        // Load journals list
+        refreshBtn.addEventListener('click', loadJournals);
+
+        async function loadJournals() {
+            listLoading.classList.add('show');
+            journalsTable.classList.add('hidden');
+            emptyState.classList.add('hidden');
+
+            try {
+                const token = await getIdToken();
+
+                const response = await fetch(`${API_BASE}/api/journals`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || '取得に失敗しました');
+                }
+
+                const journals = await response.json();
+
+                if (journals.length === 0) {
+                    emptyState.classList.remove('hidden');
+                } else {
+                    journalsBody.innerHTML = journals.map(journal => `
+                        <tr>
+                            <td>${formatDate(journal.date)}</td>
+                            <td>${journal.debit_account}</td>
+                            <td>${journal.credit_account}</td>
+                            <td>${formatCurrency(journal.amount)}</td>
+                            <td>${journal.description || '-'}</td>
+                            <td>
+                                <span class="status-badge ${journal.status === 'confirmed' ? 'status-confirmed' : 'status-pending'}">
+                                    ${journal.status === 'confirmed' ? '確定済' : '未確定'}
+                                </span>
+                            </td>
+                        </tr>
+                    `).join('');
+                    journalsTable.classList.remove('hidden');
+                }
+
+            } catch (error) {
+                console.error('Load journals error:', error);
+                showToast(error.message, 'error');
+            } finally {
+                listLoading.classList.remove('show');
+            }
+        }
+
+        // ===========================================
+        // Dummy API Test (for development)
+        // ===========================================
+        async function testDummyApi() {
+            try {
+                const response = await fetch(`${API_BASE}/api/dummy`);
+                const data = await response.json();
+                console.log('Dummy API response:', data);
+            } catch (error) {
+                console.error('Dummy API error:', error);
+            }
+        }
+    </script>
+</body>
+</html>
