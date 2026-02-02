@@ -637,9 +637,10 @@
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK (with Firestore) -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
     <script>
         // ===========================================
@@ -657,19 +658,13 @@
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-
-        // ===========================================
-        // API Configuration
-        // ===========================================
-        const API_BASE = 'http://localhost:8000';
+        const db = firebase.firestore();
 
         // ===========================================
         // State
         // ===========================================
         let currentUser = null;
-        let idToken = null;
         let selectedFile = null;
-        let currentJournalId = null;
 
         // ===========================================
         // DOM Elements
@@ -705,12 +700,10 @@
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 currentUser = user;
-                idToken = await user.getIdToken();
                 showMainContent();
                 loadJournals();
             } else {
                 currentUser = null;
-                idToken = null;
                 showLoginScreen();
             }
         });
@@ -736,15 +729,6 @@
                 console.error('Logout error:', error);
                 showToast('ログアウトに失敗しました', 'error');
             }
-        }
-
-        // Get fresh ID token
-        async function getIdToken() {
-            if (currentUser) {
-                idToken = await currentUser.getIdToken(true);
-                return idToken;
-            }
-            return null;
         }
 
         // ===========================================
@@ -785,6 +769,7 @@
         }
 
         function formatDate(dateString) {
+            if (!dateString) return '-';
             const date = new Date(dateString);
             return date.toLocaleDateString('ja-JP');
         }
@@ -875,10 +860,42 @@
         }
 
         // ===========================================
-        // API Functions
+        // OCR Simulation (MVP版: ダミーデータ生成)
+        // ===========================================
+        function simulateOCR(filename) {
+            // サンプル金額を生成
+            const amounts = [980, 1280, 1980, 2500, 3300, 5500, 8800, 11000, 15000];
+            const amount = amounts[Math.floor(Math.random() * amounts.length)];
+
+            // 科目を推定（ファイル名から）
+            const lowerName = filename.toLowerCase();
+            let debitAccount = '消耗品費';
+            if (lowerName.includes('タクシー') || lowerName.includes('電車') || lowerName.includes('交通')) {
+                debitAccount = '旅費交通費';
+            } else if (lowerName.includes('会議') || lowerName.includes('カフェ')) {
+                debitAccount = '会議費';
+            } else if (lowerName.includes('接待') || lowerName.includes('贈答')) {
+                debitAccount = '交際費';
+            }
+
+            // 今日の日付
+            const today = new Date().toISOString().split('T')[0];
+
+            return {
+                date: today,
+                amount: amount,
+                tax_rate: 10,
+                debit_account: debitAccount,
+                credit_account: '現金',
+                description: `領収書: ${filename.replace(/\.[^.]+$/, '')}`
+            };
+        }
+
+        // ===========================================
+        // Firestore Functions
         // ===========================================
 
-        // Analyze receipt (upload and get journal entry)
+        // Analyze receipt (simulate OCR)
         analyzeBtn.addEventListener('click', async () => {
             if (!selectedFile) {
                 showToast('ファイルを選択してください', 'warning');
@@ -889,43 +906,26 @@
             uploadLoading.classList.add('show');
 
             try {
-                const token = await getIdToken();
-                const formData = new FormData();
-                formData.append('file', selectedFile);
+                // Simulate OCR processing
+                await new Promise(resolve => setTimeout(resolve, 1000));
 
-                const response = await fetch(`${API_BASE}/api/upload`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.detail || 'アップロードに失敗しました');
-                }
-
-                const data = await response.json();
-
-                // Store journal ID
-                currentJournalId = data.journal_id;
+                const ocrResult = simulateOCR(selectedFile.name);
 
                 // Fill form with extracted data
-                document.getElementById('journalDate').value = data.date || new Date().toISOString().split('T')[0];
-                document.getElementById('journalAmount').value = data.amount || 0;
-                document.getElementById('journalTax').value = data.tax_rate || '10';
-                document.getElementById('journalDebit').value = data.debit_account || '消耗品費';
-                document.getElementById('journalCredit').value = data.credit_account || '現金';
-                document.getElementById('journalDescription').value = data.description || '';
+                document.getElementById('journalDate').value = ocrResult.date;
+                document.getElementById('journalAmount').value = ocrResult.amount;
+                document.getElementById('journalTax').value = ocrResult.tax_rate;
+                document.getElementById('journalDebit').value = ocrResult.debit_account;
+                document.getElementById('journalCredit').value = ocrResult.credit_account;
+                document.getElementById('journalDescription').value = ocrResult.description;
 
                 // Show result section
                 resultSection.classList.add('show');
                 showToast('領収書の解析が完了しました', 'success');
 
             } catch (error) {
-                console.error('Upload error:', error);
-                showToast(error.message, 'error');
+                console.error('OCR error:', error);
+                showToast('解析に失敗しました', 'error');
             } finally {
                 analyzeBtn.disabled = false;
                 uploadLoading.classList.remove('show');
@@ -935,85 +935,72 @@
         // Cancel result
         cancelResultBtn.addEventListener('click', () => {
             resultSection.classList.remove('show');
-            currentJournalId = null;
             clearFileSelection();
         });
 
-        // Confirm journal entry
+        // Save journal to Firestore
         confirmBtn.addEventListener('click', async () => {
             confirmBtn.disabled = true;
             confirmLoading.classList.add('show');
 
             try {
-                const token = await getIdToken();
-
                 const journalData = {
-                    journal_id: currentJournalId,
+                    user_id: currentUser.uid,
                     date: document.getElementById('journalDate').value,
                     amount: parseInt(document.getElementById('journalAmount').value) || 0,
                     tax_rate: parseInt(document.getElementById('journalTax').value),
                     debit_account: document.getElementById('journalDebit').value,
                     credit_account: document.getElementById('journalCredit').value,
-                    description: document.getElementById('journalDescription').value
+                    description: document.getElementById('journalDescription').value,
+                    status: 'confirmed',
+                    receipt_filename: selectedFile ? selectedFile.name : null,
+                    created_at: firebase.firestore.FieldValue.serverTimestamp(),
+                    updated_at: firebase.firestore.FieldValue.serverTimestamp()
                 };
 
-                const response = await fetch(`${API_BASE}/api/journals/confirm`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(journalData)
-                });
-
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.detail || '保存に失敗しました');
-                }
+                // Save to Firestore
+                await db.collection('journals').add(journalData);
 
                 showToast('仕訳を保存しました', 'success');
 
                 // Reset
                 resultSection.classList.remove('show');
-                currentJournalId = null;
                 clearFileSelection();
 
                 // Refresh list
                 loadJournals();
 
             } catch (error) {
-                console.error('Confirm error:', error);
-                showToast(error.message, 'error');
+                console.error('Save error:', error);
+                showToast('保存に失敗しました: ' + error.message, 'error');
             } finally {
                 confirmBtn.disabled = false;
                 confirmLoading.classList.remove('show');
             }
         });
 
-        // Load journals list
+        // Load journals from Firestore
         refreshBtn.addEventListener('click', loadJournals);
 
         async function loadJournals() {
+            if (!currentUser) return;
+
             listLoading.classList.add('show');
             journalsTable.classList.add('hidden');
             emptyState.classList.add('hidden');
 
             try {
-                const token = await getIdToken();
+                // Query Firestore for user's journals
+                const snapshot = await db.collection('journals')
+                    .where('user_id', '==', currentUser.uid)
+                    .orderBy('created_at', 'desc')
+                    .limit(100)
+                    .get();
 
-                const response = await fetch(`${API_BASE}/api/journals`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                const journals = [];
+                snapshot.forEach(doc => {
+                    journals.push({ id: doc.id, ...doc.data() });
                 });
-
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.detail || '取得に失敗しました');
-                }
-
-                const journals = await response.json();
 
                 if (journals.length === 0) {
                     emptyState.classList.remove('hidden');
@@ -1021,9 +1008,9 @@
                     journalsBody.innerHTML = journals.map(journal => `
                         <tr>
                             <td>${formatDate(journal.date)}</td>
-                            <td>${journal.debit_account}</td>
-                            <td>${journal.credit_account}</td>
-                            <td>${formatCurrency(journal.amount)}</td>
+                            <td>${journal.debit_account || '-'}</td>
+                            <td>${journal.credit_account || '-'}</td>
+                            <td>${formatCurrency(journal.amount || 0)}</td>
                             <td>${journal.description || '-'}</td>
                             <td>
                                 <span class="status-badge ${journal.status === 'confirmed' ? 'status-confirmed' : 'status-pending'}">
@@ -1037,22 +1024,56 @@
 
             } catch (error) {
                 console.error('Load journals error:', error);
-                showToast(error.message, 'error');
+                // インデックス作成が必要な場合のエラーハンドリング
+                if (error.code === 'failed-precondition') {
+                    showToast('データベースの初期設定中です。しばらくお待ちください。', 'warning');
+                    // インデックスなしでも動くように単純なクエリを試す
+                    try {
+                        const snapshot = await db.collection('journals')
+                            .where('user_id', '==', currentUser.uid)
+                            .get();
+
+                        const journals = [];
+                        snapshot.forEach(doc => {
+                            journals.push({ id: doc.id, ...doc.data() });
+                        });
+
+                        // 手動でソート
+                        journals.sort((a, b) => {
+                            const dateA = a.created_at ? a.created_at.toDate() : new Date(0);
+                            const dateB = b.created_at ? b.created_at.toDate() : new Date(0);
+                            return dateB - dateA;
+                        });
+
+                        if (journals.length === 0) {
+                            emptyState.classList.remove('hidden');
+                        } else {
+                            journalsBody.innerHTML = journals.map(journal => `
+                                <tr>
+                                    <td>${formatDate(journal.date)}</td>
+                                    <td>${journal.debit_account || '-'}</td>
+                                    <td>${journal.credit_account || '-'}</td>
+                                    <td>${formatCurrency(journal.amount || 0)}</td>
+                                    <td>${journal.description || '-'}</td>
+                                    <td>
+                                        <span class="status-badge ${journal.status === 'confirmed' ? 'status-confirmed' : 'status-pending'}">
+                                            ${journal.status === 'confirmed' ? '確定済' : '未確定'}
+                                        </span>
+                                    </td>
+                                </tr>
+                            `).join('');
+                            journalsTable.classList.remove('hidden');
+                        }
+                    } catch (e) {
+                        console.error('Fallback query error:', e);
+                        emptyState.classList.remove('hidden');
+                    }
+                } else {
+                    showToast('データの取得に失敗しました', 'error');
+                    emptyState.classList.remove('hidden');
+                }
             } finally {
                 listLoading.classList.remove('show');
-            }
-        }
-
-        // ===========================================
-        // Dummy API Test (for development)
-        // ===========================================
-        async function testDummyApi() {
-            try {
-                const response = await fetch(`${API_BASE}/api/dummy`);
-                const data = await response.json();
-                console.log('Dummy API response:', data);
-            } catch (error) {
-                console.error('Dummy API error:', error);
             }
         }
     </script>
