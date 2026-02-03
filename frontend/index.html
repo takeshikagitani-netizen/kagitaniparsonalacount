@@ -708,37 +708,41 @@
             }
         });
 
-        // モバイル判定
-        function isMobile() {
-            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        }
-
-        // Google login
+        // Google login - ポップアップを試し、失敗したらリダイレクト
         loginBtn.addEventListener('click', async () => {
             const provider = new firebase.auth.GoogleAuthProvider();
+
             try {
-                // モバイルではリダイレクト、PCではポップアップ
-                if (isMobile()) {
-                    await auth.signInWithRedirect(provider);
-                } else {
-                    await auth.signInWithPopup(provider);
-                    showToast('ログインしました', 'success');
-                }
+                // まずポップアップを試す
+                await auth.signInWithPopup(provider);
+                showToast('ログインしました', 'success');
             } catch (error) {
-                console.error('Login error:', error);
-                showToast('ログインに失敗しました: ' + error.message, 'error');
+                console.error('Popup login error:', error);
+
+                // ポップアップがブロックされた場合はリダイレクトを試す
+                if (error.code === 'auth/popup-blocked' ||
+                    error.code === 'auth/popup-closed-by-user' ||
+                    error.code === 'auth/cancelled-popup-request') {
+                    try {
+                        await auth.signInWithRedirect(provider);
+                    } catch (redirectError) {
+                        console.error('Redirect login error:', redirectError);
+                        showToast('ログインに失敗しました', 'error');
+                    }
+                } else {
+                    showToast('ログインに失敗しました: ' + error.message, 'error');
+                }
             }
         });
 
-        // リダイレクト後の結果を処理
+        // リダイレクト後の結果を処理（リダイレクト認証使用時）
         auth.getRedirectResult().then((result) => {
             if (result.user) {
                 showToast('ログインしました', 'success');
             }
         }).catch((error) => {
-            console.error('Redirect login error:', error);
-            if (error.code !== 'auth/credential-already-in-use') {
-                showToast('ログインに失敗しました: ' + error.message, 'error');
+            if (error.code && error.code !== 'auth/credential-already-in-use') {
+                console.error('Redirect result error:', error);
             }
         });
 
