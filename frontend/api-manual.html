@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Cloud Vision APIキー取得マニュアル</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .manual-header {
+            background: linear-gradient(135deg, #4A90E2 0%, #2E5BBA 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 16px;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .manual-header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 12px;
+        }
+
+        .manual-header p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .section h2 {
+            color: #4A90E2;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .step {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .step:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .step-number {
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            background: #4A90E2;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-content h3 {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .step-content p {
+            color: #666;
+            margin-bottom: 12px;
+        }
+
+        .step-content ul {
+            margin: 12px 0;
+            padding-left: 20px;
+        }
+
+        .step-content li {
+            margin-bottom: 8px;
+            color: #666;
+        }
+
+        a {
+            color: #4A90E2;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .btn-link {
+            display: inline-block;
+            background: #4A90E2;
+            color: white !important;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            margin-top: 8px;
+            transition: background 0.3s;
+        }
+
+        .btn-link:hover {
+            background: #2E5BBA;
+            text-decoration: none;
+        }
+
+        .note {
+            background: #FFF3E0;
+            border-left: 4px solid #FF9800;
+            padding: 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+        }
+
+        .note p {
+            margin: 0;
+            color: #E65100;
+        }
+
+        .success-note {
+            background: #E8F5E9;
+            border-left: 4px solid #4CAF50;
+            padding: 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+        }
+
+        .success-note p {
+            margin: 0;
+            color: #2E7D32;
+        }
+
+        .code-block {
+            background: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-family: monospace;
+            font-size: 0.95rem;
+            margin: 12px 0;
+            word-break: break-all;
+        }
+
+        .image-placeholder {
+            background: #f0f0f0;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            margin: 16px 0;
+            color: #999;
+        }
+
+        .cost-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+
+        .cost-table th,
+        .cost-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .cost-table th {
+            background: #f5f5f5;
+            font-weight: 600;
+        }
+
+        .highlight {
+            background: #FFEB3B;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 32px;
+            color: #999;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .container {
+                padding: 0;
+            }
+            .section {
+                box-shadow: none;
+                border: 1px solid #e0e0e0;
+            }
+            .btn-link {
+                background: white !important;
+                color: #4A90E2 !important;
+                border: 1px solid #4A90E2;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="manual-header">
+            <h1>Google Cloud Vision API<br>キー取得マニュアル</h1>
+            <p>領収書仕訳システムで使用するAPIキーの取得手順</p>
+        </div>
+
+        <div class="section">
+            <h2>はじめに</h2>
+            <p>
+                このマニュアルでは、領収書仕訳システムで領収書の文字認識（OCR）を行うために必要な
+                <strong>Google Cloud Vision API</strong>のAPIキーを取得する手順を説明します。
+            </p>
+
+            <div class="success-note">
+                <p><strong>料金について：</strong>月1,000枚まで無料で利用できます。それ以降も1枚あたり約0.2円と非常に低コストです。</p>
+            </div>
+
+            <table class="cost-table">
+                <tr>
+                    <th>使用量</th>
+                    <th>料金</th>
+                </tr>
+                <tr>
+                    <td>月0〜1,000枚</td>
+                    <td><strong>無料</strong></td>
+                </tr>
+                <tr>
+                    <td>月1,001枚以降</td>
+                    <td>約$1.50/1,000枚（約0.2円/枚）</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>準備するもの</h2>
+            <ul>
+                <li>Googleアカウント（Gmail等）</li>
+                <li>クレジットカードまたはデビットカード（本人確認用。無料枠内では課金されません）</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>手順1：Google Cloud Consoleにアクセス</h2>
+
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h3>Google Cloud Consoleを開く</h3>
+                    <p>以下のリンクをクリックしてGoogle Cloud Consoleにアクセスします。</p>
+                    <a href="https://console.cloud.google.com/" target="_blank" class="btn-link">
+                        Google Cloud Console を開く
+                    </a>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h3>Googleアカウントでログイン</h3>
+                    <p>お持ちのGoogleアカウントでログインしてください。</p>
+                    <div class="note">
+                        <p>初めて利用する場合は、利用規約への同意が必要です。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>手順2：新しいプロジェクトを作成</h2>
+
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h3>プロジェクト選択メニューを開く</h3>
+                    <p>画面上部の「プロジェクトを選択」または現在のプロジェクト名をクリックします。</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h3>「新しいプロジェクト」をクリック</h3>
+                    <p>ポップアップ画面の右上にある「新しいプロジェクト」ボタンをクリックします。</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h3>プロジェクト名を入力</h3>
+                    <p>任意のプロジェクト名を入力します。例：</p>
+                    <div class="code-block">receipt-ocr</div>
+                    <p>「作成」ボタンをクリックしてプロジェクトを作成します。</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <h3>作成したプロジェクトを選択</h3>
+                    <p>プロジェクトが作成されたら、そのプロジェクトを選択して切り替えます。</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>手順3：Cloud Vision APIを有効化</h2>
+
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h3>APIライブラリを開く</h3>
+                    <p>左側メニューから「APIとサービス」→「ライブラリ」を選択します。</p>
+                    <p>または以下のリンクから直接アクセスできます：</p>
+                    <a href="https://console.cloud.google.com/apis/library/vision.googleapis.com" target="_blank" class="btn-link">
+                        Cloud Vision API ページを開く
+                    </a>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h3>Cloud Vision APIを検索</h3>
+                    <p>検索ボックスに「<span class="highlight">Cloud Vision API</span>」と入力して検索します。</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h3>「有効にする」をクリック</h3>
+                    <p>Cloud Vision APIのページで「有効にする」ボタンをクリックします。</p>
+                    <div class="note">
+                        <p>初回は課金アカウントの設定が必要な場合があります。クレジットカード情報を入力しても、無料枠内では課金されません。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>手順4：APIキーを作成</h2>
+
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h3>認証情報ページを開く</h3>
+                    <p>左側メニューから「APIとサービス」→「認証情報」を選択します。</p>
+                    <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="btn-link">
+                        認証情報ページを開く
+                    </a>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h3>「認証情報を作成」をクリック</h3>
+                    <p>画面上部の「+ 認証情報を作成」ボタンをクリックし、「APIキー」を選択します。</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h3>APIキーをコピー</h3>
+                    <p>APIキーが生成されます。このキーをコピーしてください。</p>
+                    <div class="code-block">AIza○○○○○○○○○○○○○○○○○○○○○○○○○</div>
+                    <div class="success-note">
+                        <p><strong>重要：</strong>このAPIキーは他人に見せないでください。悪用される可能性があります。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>手順5：領収書仕訳システムにAPIキーを設定</h2>
+
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h3>領収書仕訳システムにログイン</h3>
+                    <p>領収書仕訳システムにGoogleアカウントでログインします。</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h3>設定画面を開く</h3>
+                    <p>画面右上の「⚙️ 設定」ボタンをクリックします。</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h3>APIキーを貼り付けて保存</h3>
+                    <p>コピーしたAPIキーを入力欄に貼り付け、「保存」ボタンをクリックします。</p>
+                    <div class="success-note">
+                        <p>「APIキーを保存しました」と表示されれば設定完了です！</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>トラブルシューティング</h2>
+
+            <h3 style="margin-top: 16px;">「APIキーが無効です」と表示される場合</h3>
+            <ul>
+                <li>Cloud Vision APIが有効になっているか確認してください</li>
+                <li>APIキーが正しくコピーされているか確認してください</li>
+                <li>プロジェクトに課金アカウントが設定されているか確認してください</li>
+            </ul>
+
+            <h3 style="margin-top: 24px;">課金アカウントの設定方法</h3>
+            <p>Google Cloud Consoleの「お支払い」メニューから課金アカウントを作成し、プロジェクトにリンクしてください。</p>
+            <a href="https://console.cloud.google.com/billing" target="_blank" class="btn-link">
+                お支払い設定を開く
+            </a>
+        </div>
+
+        <div class="section">
+            <h2>APIキーの制限設定（推奨）</h2>
+            <p>セキュリティを高めるため、APIキーに制限を設定することをお勧めします。</p>
+
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h3>APIキーの編集画面を開く</h3>
+                    <p>認証情報ページで作成したAPIキーをクリックします。</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h3>API制限を設定</h3>
+                    <p>「APIの制限」セクションで「キーを制限」を選択し、「Cloud Vision API」のみを選択します。</p>
+                    <p>これにより、このキーはCloud Vision API以外には使用できなくなります。</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>領収書仕訳システム - APIキー取得マニュアル</p>
+            <p style="margin-top: 8px;">
+                <a href="index.html">← アプリに戻る</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

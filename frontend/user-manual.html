@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>領収書仕訳システム 利用マニュアル</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .manual-header {
+            background: linear-gradient(135deg, #4A90E2 0%, #2E5BBA 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 16px;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .manual-header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 12px;
+        }
+
+        .manual-header p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .toc {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .toc h2 {
+            color: #4A90E2;
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+        }
+
+        .toc ul {
+            list-style: none;
+        }
+
+        .toc li {
+            margin-bottom: 8px;
+        }
+
+        .toc a {
+            color: #4A90E2;
+            text-decoration: none;
+        }
+
+        .toc a:hover {
+            text-decoration: underline;
+        }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .section h2 {
+            color: #4A90E2;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .section h3 {
+            color: #333;
+            font-size: 1.1rem;
+            margin: 24px 0 12px 0;
+        }
+
+        .section p {
+            margin-bottom: 12px;
+        }
+
+        .step {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .step:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .step-number {
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            background: #4A90E2;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-content h4 {
+            font-size: 1rem;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .step-content p {
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        ul, ol {
+            margin: 12px 0;
+            padding-left: 24px;
+        }
+
+        li {
+            margin-bottom: 8px;
+            color: #666;
+        }
+
+        a {
+            color: #4A90E2;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .btn-link {
+            display: inline-block;
+            background: #4A90E2;
+            color: white !important;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            margin-top: 8px;
+            transition: background 0.3s;
+        }
+
+        .btn-link:hover {
+            background: #2E5BBA;
+            text-decoration: none;
+        }
+
+        .note {
+            background: #FFF3E0;
+            border-left: 4px solid #FF9800;
+            padding: 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+        }
+
+        .note p {
+            margin: 0;
+            color: #E65100;
+        }
+
+        .success-note {
+            background: #E8F5E9;
+            border-left: 4px solid #4CAF50;
+            padding: 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+        }
+
+        .success-note p {
+            margin: 0;
+            color: #2E7D32;
+        }
+
+        .info-note {
+            background: #E3F2FD;
+            border-left: 4px solid #2196F3;
+            padding: 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+        }
+
+        .info-note p {
+            margin: 0;
+            color: #1565C0;
+        }
+
+        .feature-box {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 16px 0;
+        }
+
+        .feature-box h4 {
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            background: #f5f5f5;
+            font-weight: 600;
+        }
+
+        .workflow {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .workflow-step {
+            background: #4A90E2;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .workflow-arrow {
+            color: #999;
+            font-size: 1.5rem;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 32px;
+            color: #999;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .container {
+                padding: 0;
+            }
+            .section {
+                box-shadow: none;
+                border: 1px solid #e0e0e0;
+                page-break-inside: avoid;
+            }
+            .btn-link {
+                background: white !important;
+                color: #4A90E2 !important;
+                border: 1px solid #4A90E2;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .workflow {
+                flex-direction: column;
+            }
+            .workflow-arrow {
+                transform: rotate(90deg);
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="manual-header">
+            <h1>領収書仕訳システム<br>利用マニュアル</h1>
+            <p>領収書をスマホで撮影 → 自動で仕訳 → CSVで出力</p>
+        </div>
+
+        <div class="toc">
+            <h2>目次</h2>
+            <ul>
+                <li><a href="#overview">1. システム概要</a></li>
+                <li><a href="#workflow">2. 基本的な使い方の流れ</a></li>
+                <li><a href="#setup">3. 初回セットアップ</a></li>
+                <li><a href="#login">4. ログイン方法</a></li>
+                <li><a href="#upload">5. 領収書のアップロード</a></li>
+                <li><a href="#journal">6. 仕訳の確認・編集</a></li>
+                <li><a href="#list">7. 仕訳一覧の操作</a></li>
+                <li><a href="#csv">8. CSVダウンロード</a></li>
+                <li><a href="#settings">9. 設定変更</a></li>
+                <li><a href="#faq">10. よくある質問</a></li>
+            </ul>
+        </div>
+
+        <div class="section" id="overview">
+            <h2>1. システム概要</h2>
+            <p>
+                領収書仕訳システムは、スマートフォンで撮影した領収書を自動で読み取り、
+                仕訳データとして管理できるWebアプリケーションです。
+            </p>
+
+            <div class="feature-box">
+                <h4>主な機能</h4>
+                <ul>
+                    <li><strong>OCR自動読取：</strong>領収書の日付・金額・店舗名を自動で認識</li>
+                    <li><strong>インボイス対応：</strong>登録番号（T+13桁）の自動抽出</li>
+                    <li><strong>複数枚一括処理：</strong>複数の領収書をまとめてアップロード</li>
+                    <li><strong>仕訳編集：</strong>自動認識結果を手動で修正可能</li>
+                    <li><strong>CSV出力：</strong>税理士さんへの提出用データを出力</li>
+                </ul>
+            </div>
+
+            <div class="info-note">
+                <p><strong>対応ブラウザ：</strong>Google Chrome、Safari、Microsoft Edge（最新版）</p>
+            </div>
+        </div>
+
+        <div class="section" id="workflow">
+            <h2>2. 基本的な使い方の流れ</h2>
+
+            <div class="workflow">
+                <div class="workflow-step">1. スマホで撮影</div>
+                <span class="workflow-arrow">→</span>
+                <div class="workflow-step">2. Googleドライブに保存</div>
+                <span class="workflow-arrow">→</span>
+                <div class="workflow-step">3. PCでアップロード</div>
+                <span class="workflow-arrow">→</span>
+                <div class="workflow-step">4. 仕訳確認・保存</div>
+                <span class="workflow-arrow">→</span>
+                <div class="workflow-step">5. CSVダウンロード</div>
+            </div>
+
+            <h3>推奨ワークフロー</h3>
+            <ol>
+                <li>領収書をスマートフォンで撮影</li>
+                <li>Googleドライブの専用フォルダに保存</li>
+                <li>PCでGoogleドライブを開き、本システムに領収書をアップロード</li>
+                <li>自動認識された仕訳内容を確認し、必要に応じて修正</li>
+                <li>月末などにCSVをダウンロードして税理士さんに提出</li>
+            </ol>
+
+            <div class="success-note">
+                <p><strong>ポイント：</strong>Googleドライブのフォルダを税理士さんと共有しておくと、さらに便利です。</p>
+            </div>
+        </div>
+
+        <div class="section" id="setup">
+            <h2>3. 初回セットアップ</h2>
+            <p>初めてシステムを利用する際は、以下の設定が必要です。</p>
+
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h4>Google Cloud Vision APIキーの取得</h4>
+                    <p>領収書の文字認識には、ご自身のGoogle Cloud APIキーが必要です。</p>
+                    <p>詳しい取得方法は以下のマニュアルをご覧ください。</p>
+                    <a href="api-manual.html" target="_blank" class="btn-link">
+                        APIキー取得マニュアルを開く
+                    </a>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h4>システムにログイン</h4>
+                    <p>Googleアカウントでシステムにログインします。</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h4>APIキーを設定</h4>
+                    <p>初回ログイン時に設定画面が自動で表示されます。取得したAPIキーを入力して保存します。</p>
+                </div>
+            </div>
+
+            <div class="note">
+                <p><strong>注意：</strong>APIキーを設定しないと、領収書の自動読取機能は使用できません（手動入力のみ可能）。</p>
+            </div>
+        </div>
+
+        <div class="section" id="login">
+            <h2>4. ログイン方法</h2>
+
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h4>システムにアクセス</h4>
+                    <p>以下のURLにアクセスします。</p>
+                    <a href="https://receipt-journal-bb6aa.web.app" target="_blank" class="btn-link">
+                        領収書仕訳システムを開く
+                    </a>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h4>「Googleでログイン」をクリック</h4>
+                    <p>画面中央の「Googleでログイン」ボタンをクリックします。</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h4>Googleアカウントを選択</h4>
+                    <p>使用するGoogleアカウントを選択してログインします。</p>
+                </div>
+            </div>
+
+            <div class="info-note">
+                <p><strong>データの管理：</strong>仕訳データはGoogleアカウントごとに分離されています。他のユーザーのデータは見えません。</p>
+            </div>
+        </div>
+
+        <div class="section" id="upload">
+            <h2>5. 領収書のアップロード</h2>
+
+            <h3>方法1：ドラッグ＆ドロップ</h3>
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h4>ファイルをドラッグ</h4>
+                    <p>PC上の領収書画像ファイルを、画面の「ファイルをドラッグ＆ドロップ」エリアにドラッグします。</p>
+                    <p>複数ファイルを同時に選択してドラッグすることもできます。</p>
+                </div>
+            </div>
+
+            <h3>方法2：クリックして選択</h3>
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h4>アップロードエリアをクリック</h4>
+                    <p>「クリックして選択」のテキストをクリックします。</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h4>ファイルを選択</h4>
+                    <p>ファイル選択ダイアログが表示されます。領収書画像を選択します。</p>
+                    <p>Ctrlキー（MacはCommandキー）を押しながらクリックで複数選択できます。</p>
+                </div>
+            </div>
+
+            <div class="feature-box">
+                <h4>対応ファイル形式</h4>
+                <ul>
+                    <li>JPEG（.jpg, .jpeg）</li>
+                    <li>PNG（.png）</li>
+                    <li>PDF（.pdf）</li>
+                </ul>
+                <p style="margin-top: 8px; color: #666;">※ 最大ファイルサイズ：10MB</p>
+            </div>
+
+            <h3>複数ファイルの処理</h3>
+            <p>複数ファイルをアップロードすると、「アップロードキュー」に追加されます。</p>
+            <ul>
+                <li><strong>「すべて処理開始」：</strong>キュー内のファイルを順番に処理</li>
+                <li><strong>「+ ファイルを追加」：</strong>キューにファイルを追加</li>
+                <li><strong>「すべてクリア」：</strong>キューをクリア</li>
+            </ul>
+        </div>
+
+        <div class="section" id="journal">
+            <h2>6. 仕訳の確認・編集</h2>
+
+            <p>領収書をアップロードすると、OCRで自動的に以下の項目が読み取られます。</p>
+
+            <table>
+                <tr>
+                    <th>項目</th>
+                    <th>説明</th>
+                </tr>
+                <tr>
+                    <td>日付</td>
+                    <td>領収書に記載された日付</td>
+                </tr>
+                <tr>
+                    <td>金額</td>
+                    <td>合計金額（最大の金額を自動検出）</td>
+                </tr>
+                <tr>
+                    <td>税区分</td>
+                    <td>10%（標準）/ 8%（軽減）/ 非課税</td>
+                </tr>
+                <tr>
+                    <td>借方科目</td>
+                    <td>消耗品費、旅費交通費など（内容から自動推定）</td>
+                </tr>
+                <tr>
+                    <td>貸方科目</td>
+                    <td>現金、クレジットカードなど</td>
+                </tr>
+                <tr>
+                    <td>摘要</td>
+                    <td>取引内容の説明</td>
+                </tr>
+                <tr>
+                    <td>社名</td>
+                    <td>店舗名・会社名</td>
+                </tr>
+                <tr>
+                    <td>登録番号</td>
+                    <td>インボイス番号（T+13桁）</td>
+                </tr>
+            </table>
+
+            <h3>仕訳内容の修正</h3>
+            <p>自動認識の結果が正しくない場合は、各項目を手動で修正できます。</p>
+
+            <h3>仕訳の保存</h3>
+            <p>内容を確認したら「仕訳を保存」ボタンをクリックします。</p>
+            <p>保存後、次の領収書の処理に自動で進みます。</p>
+
+            <div class="note">
+                <p><strong>キャンセル：</strong>「キャンセル」ボタンをクリックすると、その領収書をスキップして次に進みます。</p>
+            </div>
+        </div>
+
+        <div class="section" id="list">
+            <h2>7. 仕訳一覧の操作</h2>
+
+            <p>保存した仕訳は「仕訳一覧」に表示されます。</p>
+
+            <h3>仕訳の詳細表示</h3>
+            <p>一覧の行をクリックすると、詳細モーダルが表示されます。</p>
+
+            <h3>仕訳の編集</h3>
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h4>詳細画面で「編集」をクリック</h4>
+                    <p>詳細モーダルの「編集」ボタンをクリックします。</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h4>内容を修正</h4>
+                    <p>各項目が編集可能になります。必要な箇所を修正します。</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h4>「保存」をクリック</h4>
+                    <p>修正が完了したら「保存」ボタンをクリックします。</p>
+                </div>
+            </div>
+
+            <h3>仕訳の削除</h3>
+            <p>詳細モーダルの「削除」ボタンをクリックすると、その仕訳を削除できます。</p>
+            <div class="note">
+                <p><strong>注意：</strong>削除した仕訳は復元できません。</p>
+            </div>
+        </div>
+
+        <div class="section" id="csv">
+            <h2>8. CSVダウンロード</h2>
+
+            <p>仕訳データをCSVファイルとしてダウンロードできます。</p>
+
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h4>「CSVダウンロード」をクリック</h4>
+                    <p>仕訳一覧の上部にある「CSVダウンロード」ボタンをクリックします。</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h4>ファイルを保存</h4>
+                    <p>「仕訳一覧_YYYY-MM-DD.csv」というファイル名でダウンロードされます。</p>
+                </div>
+            </div>
+
+            <h3>CSVに含まれる項目</h3>
+            <ul>
+                <li>日付</li>
+                <li>借方科目</li>
+                <li>貸方科目</li>
+                <li>金額</li>
+                <li>税区分</li>
+                <li>摘要</li>
+                <li>社名</li>
+                <li>登録番号</li>
+                <li>ファイル名</li>
+                <li>ステータス</li>
+            </ul>
+
+            <div class="success-note">
+                <p><strong>Excel対応：</strong>CSVファイルはBOM付きUTF-8形式のため、Excelで開いても文字化けしません。</p>
+            </div>
+        </div>
+
+        <div class="section" id="settings">
+            <h2>9. 設定変更</h2>
+
+            <h3>設定画面を開く</h3>
+            <p>画面右上の「⚙️ 設定」ボタンをクリックします。</p>
+
+            <h3>APIキーの変更</h3>
+            <p>設定画面でAPIキーを変更できます。新しいAPIキーを入力して「保存」をクリックしてください。</p>
+
+            <h3>ログアウト</h3>
+            <p>画面右上の「ログアウト」ボタンをクリックするとログアウトします。</p>
+        </div>
+
+        <div class="section" id="faq">
+            <h2>10. よくある質問</h2>
+
+            <h3>Q. スマートフォンから直接使えますか？</h3>
+            <p>A. PCでの利用を推奨しています。スマートフォンでも動作しますが、画面が小さく操作しづらい場合があります。</p>
+
+            <h3>Q. 領収書の画像はどこに保存されますか？</h3>
+            <p>A. 画像自体はサーバーに保存されません。OCR処理のみ行い、抽出されたテキストデータのみが保存されます。元の画像はお客様のGoogleドライブ等で管理してください。</p>
+
+            <h3>Q. 他のユーザーに自分のデータが見られることはありますか？</h3>
+            <p>A. ありません。各ユーザーのデータは完全に分離されており、他のユーザーがアクセスすることはできません。</p>
+
+            <h3>Q. OCRの精度が悪い場合はどうすればいいですか？</h3>
+            <p>A. 以下の点を確認してください。</p>
+            <ul>
+                <li>領収書の写真がぶれていないか</li>
+                <li>十分な明るさがあるか</li>
+                <li>文字が潰れていないか</li>
+                <li>領収書全体が写っているか</li>
+            </ul>
+
+            <h3>Q. 月1,000枚を超えた場合、どうなりますか？</h3>
+            <p>A. Google Cloud Vision APIの無料枠を超えた場合、お客様のGoogleアカウントに紐づく課金アカウントに自動で請求されます（約0.2円/枚）。</p>
+
+            <h3>Q. APIキーを紛失した場合は？</h3>
+            <p>A. Google Cloud Consoleから新しいAPIキーを作成し、設定画面で更新してください。</p>
+        </div>
+
+        <div class="section">
+            <h2>お問い合わせ</h2>
+            <p>ご不明な点がございましたら、システム管理者にお問い合わせください。</p>
+        </div>
+
+        <div class="footer">
+            <p>領収書仕訳システム 利用マニュアル</p>
+            <p style="margin-top: 8px;">
+                <a href="index.html">← アプリに戻る</a> |
+                <a href="api-manual.html">APIキー取得マニュアル</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

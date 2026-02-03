@@ -556,6 +556,159 @@
             background-color: #5a6268;
         }
 
+        /* Settings button */
+        .btn-settings {
+            background-color: transparent;
+            color: white;
+            border: 1px solid white;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+        }
+
+        .btn-settings:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* API Setup Modal */
+        .api-setup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 3000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .api-setup-overlay.show {
+            display: flex;
+        }
+
+        .api-setup-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 550px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .api-setup-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .api-setup-header h3 {
+            margin: 0 0 8px 0;
+            color: var(--text-dark);
+            font-size: 1.3rem;
+        }
+
+        .api-setup-header p {
+            margin: 0;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .api-setup-body {
+            padding: 24px;
+        }
+
+        .api-input-group {
+            margin-bottom: 20px;
+        }
+
+        .api-input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+
+        .api-input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: monospace;
+        }
+
+        .api-input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .api-input-group .hint {
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        .api-steps {
+            background: var(--bg-light);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .api-steps h4 {
+            margin: 0 0 12px 0;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+        }
+
+        .api-steps ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .api-steps li {
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .api-steps a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .api-steps a:hover {
+            text-decoration: underline;
+        }
+
+        .api-setup-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .api-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .api-status.connected {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        .api-status.not-connected {
+            background: #FFF3E0;
+            color: #E65100;
+        }
+
         .modal-footer {
             display: flex;
             justify-content: space-between;
@@ -896,6 +1049,46 @@
         </div>
     </div>
 
+    <!-- API設定モーダル -->
+    <div class="api-setup-overlay" id="apiSetupModal">
+        <div class="api-setup-content">
+            <div class="api-setup-header">
+                <h3>API設定</h3>
+                <p>領収書のOCR（文字認識）にはGoogle Cloud Vision APIキーが必要です</p>
+            </div>
+            <div class="api-setup-body">
+                <div class="api-status not-connected" id="apiStatus">
+                    <span id="apiStatusIcon">⚠️</span>
+                    <span id="apiStatusText">APIキーが設定されていません</span>
+                </div>
+
+                <div class="api-steps">
+                    <h4>APIキーの取得方法</h4>
+                    <ol>
+                        <li><a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a> にアクセス</li>
+                        <li>新しいプロジェクトを作成（または既存を選択）</li>
+                        <li>「APIとサービス」→「ライブラリ」から「Cloud Vision API」を有効化</li>
+                        <li>「APIとサービス」→「認証情報」→「認証情報を作成」→「APIキー」</li>
+                        <li>作成されたAPIキーをコピーして下記に貼り付け</li>
+                    </ol>
+                    <p style="margin-top: 12px; font-size: 0.85rem;">
+                        <a href="api-manual.html" target="_blank">📖 詳しい設定マニュアルはこちら</a>
+                    </p>
+                </div>
+
+                <div class="api-input-group">
+                    <label for="apiKeyInput">Google Cloud Vision APIキー</label>
+                    <input type="text" id="apiKeyInput" placeholder="AIza...で始まるAPIキーを入力">
+                    <p class="hint">※ APIキーはお客様のアカウントに安全に保存されます</p>
+                </div>
+            </div>
+            <div class="api-setup-footer">
+                <button class="btn" style="background: #eee; color: #666;" id="skipApiSetup">後で設定</button>
+                <button class="btn btn-success" id="saveApiKey">保存</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase SDK (with Firestore) -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -927,6 +1120,7 @@
         let currentProcessingIndex = -1;
         let journalsData = []; // 仕訳一覧データを保持
         let selectedJournalId = null; // 選択中の仕訳ID
+        let userApiKey = null; // ユーザーのAPIキー
 
         // ===========================================
         // DOM Elements
@@ -964,6 +1158,13 @@
         const cancelEditBtn = document.getElementById('cancelEditBtn');
         const closeDetailBtn = document.getElementById('closeDetailBtn');
         const csvDownloadBtn = document.getElementById('csvDownloadBtn');
+        const apiSetupModal = document.getElementById('apiSetupModal');
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        const saveApiKeyBtn = document.getElementById('saveApiKey');
+        const skipApiSetupBtn = document.getElementById('skipApiSetup');
+        const apiStatus = document.getElementById('apiStatus');
+        const apiStatusIcon = document.getElementById('apiStatusIcon');
+        const apiStatusText = document.getElementById('apiStatusText');
         let isEditMode = false;
 
         // ===========================================
@@ -974,10 +1175,16 @@
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 currentUser = user;
+                await loadUserApiKey();
                 showMainContent();
                 loadJournals();
+                // 初回ログイン時にAPIキーが未設定なら設定モーダルを表示
+                if (!userApiKey) {
+                    showApiSetupModal();
+                }
             } else {
                 currentUser = null;
+                userApiKey = null;
                 showLoginScreen();
             }
         });
@@ -1049,6 +1256,7 @@
             userInfo.innerHTML = `
                 <img class="user-avatar" src="${currentUser.photoURL || 'https://via.placeholder.com/40'}" alt="avatar">
                 <span class="user-name">${currentUser.displayName || currentUser.email}</span>
+                <button class="btn btn-settings" onclick="showApiSetupModal()">⚙️ 設定</button>
                 <button class="btn btn-logout" onclick="logout()">ログアウト</button>
             `;
         }
@@ -1212,13 +1420,116 @@
         });
 
         // ===========================================
+        // API Key Management
+        // ===========================================
+
+        // ユーザーのAPIキーを読み込み
+        async function loadUserApiKey() {
+            if (!currentUser) return;
+            try {
+                const doc = await db.collection('user_settings').doc(currentUser.uid).get();
+                if (doc.exists && doc.data().apiKey) {
+                    userApiKey = doc.data().apiKey;
+                }
+            } catch (error) {
+                console.error('Error loading API key:', error);
+            }
+        }
+
+        // APIキーを保存
+        async function saveUserApiKey(apiKey) {
+            if (!currentUser) return;
+            try {
+                await db.collection('user_settings').doc(currentUser.uid).set({
+                    apiKey: apiKey,
+                    updated_at: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+                userApiKey = apiKey;
+                return true;
+            } catch (error) {
+                console.error('Error saving API key:', error);
+                return false;
+            }
+        }
+
+        // API設定モーダルを表示
+        function showApiSetupModal() {
+            // 現在の状態を反映
+            if (userApiKey) {
+                apiStatus.className = 'api-status connected';
+                apiStatusIcon.textContent = '✅';
+                apiStatusText.textContent = 'APIキーが設定されています';
+                apiKeyInput.value = userApiKey;
+            } else {
+                apiStatus.className = 'api-status not-connected';
+                apiStatusIcon.textContent = '⚠️';
+                apiStatusText.textContent = 'APIキーが設定されていません';
+                apiKeyInput.value = '';
+            }
+            apiSetupModal.classList.add('show');
+        }
+
+        // API設定モーダルを閉じる
+        function closeApiSetupModal() {
+            apiSetupModal.classList.remove('show');
+        }
+
+        // APIキー保存ボタン
+        saveApiKeyBtn.addEventListener('click', async () => {
+            const apiKey = apiKeyInput.value.trim();
+            if (!apiKey) {
+                showToast('APIキーを入力してください', 'warning');
+                return;
+            }
+            if (!apiKey.startsWith('AIza')) {
+                showToast('正しいAPIキーの形式ではありません', 'error');
+                return;
+            }
+
+            saveApiKeyBtn.disabled = true;
+            saveApiKeyBtn.textContent = '保存中...';
+
+            const success = await saveUserApiKey(apiKey);
+            if (success) {
+                showToast('APIキーを保存しました', 'success');
+                closeApiSetupModal();
+            } else {
+                showToast('保存に失敗しました', 'error');
+            }
+
+            saveApiKeyBtn.disabled = false;
+            saveApiKeyBtn.textContent = '保存';
+        });
+
+        // スキップボタン
+        skipApiSetupBtn.addEventListener('click', () => {
+            closeApiSetupModal();
+            if (!userApiKey) {
+                showToast('APIキー未設定のため、OCR機能は使用できません', 'warning');
+            }
+        });
+
+        // モーダル外クリックで閉じる
+        apiSetupModal.addEventListener('click', (e) => {
+            if (e.target === apiSetupModal) {
+                closeApiSetupModal();
+            }
+        });
+
+        // ===========================================
         // Google Cloud Vision OCR
         // ===========================================
-        const VISION_API_KEY = 'AIzaSyBbF7J2nZn5L1_QtLK0os3Em1CZ9YWZf_E';
-        const VISION_API_URL = `https://vision.googleapis.com/v1/images:annotate?key=${VISION_API_KEY}`;
 
         // Cloud Vision APIでOCR実行
         async function performOCR(dataUrl) {
+            // APIキーのチェック
+            if (!userApiKey) {
+                showToast('APIキーが設定されていません。設定画面からAPIキーを入力してください。', 'error');
+                return null;
+            }
+
+            const VISION_API_URL = `https://vision.googleapis.com/v1/images:annotate?key=${userApiKey}`;
+
             // DataURLからbase64部分を抽出
             const base64Image = dataUrl.split(',')[1];
 
@@ -1236,6 +1547,9 @@
             });
 
             if (!response.ok) {
+                if (response.status === 403) {
+                    showToast('APIキーが無効です。設定を確認してください。', 'error');
+                }
                 throw new Error(`Vision API error: ${response.status}`);
             }
 
