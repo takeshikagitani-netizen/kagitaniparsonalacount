@@ -913,7 +913,7 @@
                 width: 100%;
             }
 
-            /* 仕訳一覧テーブルのモバイル対応 */
+            /* 仕訳一覧テーブルのモバイル対応 - カード形式 */
             .journals-section {
                 padding: 16px;
             }
@@ -924,24 +924,87 @@
                 align-items: flex-start;
             }
 
+            .journals-section h2 > span {
+                font-size: 1.1rem;
+            }
+
             .journals-section h2 > div {
                 width: 100%;
+                display: flex;
+                gap: 8px;
             }
 
             .journals-section h2 .btn {
                 flex: 1;
-            }
-
-            .journals-table {
-                display: block;
-                overflow-x: auto;
+                padding: 10px 12px;
                 font-size: 0.85rem;
             }
 
-            .journals-table th,
+            /* テーブルをカード形式に変換 */
+            .journals-table {
+                display: block;
+            }
+
+            .journals-table thead {
+                display: none;
+            }
+
+            .journals-table tbody {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .journals-table tr {
+                display: block;
+                background: var(--bg-light);
+                border-radius: 12px;
+                padding: 14px;
+                border: 1px solid var(--border-color);
+                cursor: pointer;
+            }
+
+            .journals-table tr:hover {
+                background: rgba(74, 144, 226, 0.1);
+            }
+
             .journals-table td {
-                padding: 8px 10px;
-                white-space: nowrap;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 6px 0;
+                border-bottom: 1px solid rgba(0,0,0,0.05);
+                font-size: 0.9rem;
+            }
+
+            .journals-table td:last-child {
+                border-bottom: none;
+            }
+
+            .journals-table td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: var(--text-light);
+                font-size: 0.8rem;
+                flex-shrink: 0;
+                margin-right: 12px;
+            }
+
+            .journals-table td:nth-child(1)::before { content: "日付"; }
+            .journals-table td:nth-child(2)::before { content: "社名"; }
+            .journals-table td:nth-child(3)::before { content: "借方"; }
+            .journals-table td:nth-child(4)::before { content: "貸方"; }
+            .journals-table td:nth-child(5)::before { content: "金額"; }
+            .journals-table td:nth-child(6)::before { content: "摘要"; }
+            .journals-table td:nth-child(7)::before { content: "状態"; }
+
+            .journals-table td:nth-child(5) {
+                font-weight: 600;
+                color: var(--primary-dark);
+            }
+
+            .journals-table td:nth-child(6) {
+                word-break: break-word;
             }
 
             /* モーダルのモバイル対応 */
