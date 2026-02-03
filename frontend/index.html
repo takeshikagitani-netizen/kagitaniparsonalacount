@@ -456,6 +456,89 @@
             background-color: var(--warning);
         }
 
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: var(--text-dark);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-light);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .detail-label {
+            font-weight: 500;
+            color: var(--text-light);
+        }
+
+        .detail-value {
+            color: var(--text-dark);
+            text-align: right;
+            word-break: break-all;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: space-between;
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-color);
+            gap: 12px;
+        }
+
+        .journals-table tr {
+            cursor: pointer;
+        }
+
         /* File Queue */
         .queue-list {
             display: flex;
@@ -718,6 +801,58 @@
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
+    <!-- 詳細モーダル -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>仕訳詳細</h3>
+                <button class="modal-close" onclick="closeDetailModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-row">
+                    <span class="detail-label">日付</span>
+                    <span class="detail-value" id="detailDate">-</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">金額</span>
+                    <span class="detail-value" id="detailAmount">-</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">税区分</span>
+                    <span class="detail-value" id="detailTax">-</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">借方科目</span>
+                    <span class="detail-value" id="detailDebit">-</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">貸方科目</span>
+                    <span class="detail-value" id="detailCredit">-</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">摘要</span>
+                    <span class="detail-value" id="detailDescription">-</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">登録番号</span>
+                    <span class="detail-value" id="detailRegistration">-</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">ファイル名</span>
+                    <span class="detail-value" id="detailFilename">-</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">登録日時</span>
+                    <span class="detail-value" id="detailCreatedAt">-</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" id="deleteJournalBtn">削除</button>
+                <button class="btn btn-primary" onclick="closeDetailModal()">閉じる</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase SDK (with Firestore) -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -747,6 +882,8 @@
         let currentUser = null;
         let fileQueue = []; // { file, status: 'pending'|'processing'|'done', dataUrl }
         let currentProcessingIndex = -1;
+        let journalsData = []; // 仕訳一覧データを保持
+        let selectedJournalId = null; // 選択中の仕訳ID
 
         // ===========================================
         // DOM Elements
@@ -777,6 +914,8 @@
         const emptyState = document.getElementById('emptyState');
         const listLoading = document.getElementById('listLoading');
         const toast = document.getElementById('toast');
+        const detailModal = document.getElementById('detailModal');
+        const deleteJournalBtn = document.getElementById('deleteJournalBtn');
 
         // ===========================================
         // Auth Functions
@@ -1355,11 +1494,14 @@
                     journals.push({ id: doc.id, ...doc.data() });
                 });
 
+                // データを保存
+                journalsData = journals;
+
                 if (journals.length === 0) {
                     emptyState.classList.remove('hidden');
                 } else {
                     journalsBody.innerHTML = journals.map(journal => `
-                        <tr>
+                        <tr onclick="showJournalDetail('${journal.id}')">
                             <td>${formatDate(journal.date)}</td>
                             <td>${journal.debit_account || '-'}</td>
                             <td>${journal.credit_account || '-'}</td>
@@ -1398,11 +1540,14 @@
                             return dateB - dateA;
                         });
 
+                        // データを保存
+                        journalsData = journals;
+
                         if (journals.length === 0) {
                             emptyState.classList.remove('hidden');
                         } else {
                             journalsBody.innerHTML = journals.map(journal => `
-                                <tr>
+                                <tr onclick="showJournalDetail('${journal.id}')">
                                     <td>${formatDate(journal.date)}</td>
                                     <td>${journal.debit_account || '-'}</td>
                                     <td>${journal.credit_account || '-'}</td>
@@ -1429,6 +1574,74 @@
                 listLoading.classList.remove('show');
             }
         }
+
+        // ===========================================
+        // 詳細モーダル関連
+        // ===========================================
+
+        // 詳細モーダルを表示
+        function showJournalDetail(journalId) {
+            const journal = journalsData.find(j => j.id === journalId);
+            if (!journal) {
+                showToast('データが見つかりません', 'error');
+                return;
+            }
+
+            selectedJournalId = journalId;
+
+            // モーダルに値をセット
+            document.getElementById('detailDate').textContent = formatDate(journal.date);
+            document.getElementById('detailAmount').textContent = formatCurrency(journal.amount || 0);
+            document.getElementById('detailTax').textContent = `${journal.tax_rate || 10}%`;
+            document.getElementById('detailDebit').textContent = journal.debit_account || '-';
+            document.getElementById('detailCredit').textContent = journal.credit_account || '-';
+            document.getElementById('detailDescription').textContent = journal.description || '-';
+            document.getElementById('detailRegistration').textContent = journal.registration_number || '-';
+            document.getElementById('detailFilename').textContent = journal.receipt_filename || '-';
+
+            // 登録日時
+            if (journal.created_at && journal.created_at.toDate) {
+                const createdDate = journal.created_at.toDate();
+                document.getElementById('detailCreatedAt').textContent = createdDate.toLocaleString('ja-JP');
+            } else {
+                document.getElementById('detailCreatedAt').textContent = '-';
+            }
+
+            // モーダルを表示
+            detailModal.classList.add('show');
+        }
+
+        // 詳細モーダルを閉じる
+        function closeDetailModal() {
+            detailModal.classList.remove('show');
+            selectedJournalId = null;
+        }
+
+        // モーダル外クリックで閉じる
+        detailModal.addEventListener('click', (e) => {
+            if (e.target === detailModal) {
+                closeDetailModal();
+            }
+        });
+
+        // 仕訳を削除
+        deleteJournalBtn.addEventListener('click', async () => {
+            if (!selectedJournalId) return;
+
+            if (!confirm('この仕訳を削除しますか？')) {
+                return;
+            }
+
+            try {
+                await db.collection('journals').doc(selectedJournalId).delete();
+                showToast('仕訳を削除しました', 'success');
+                closeDetailModal();
+                loadJournals();
+            } catch (error) {
+                console.error('Delete error:', error);
+                showToast('削除に失敗しました: ' + error.message, 'error');
+            }
+        });
     </script>
 </body>
 </html>
