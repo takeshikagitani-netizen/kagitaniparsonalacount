@@ -788,16 +788,120 @@
             display: none !important;
         }
 
+        /* Camera Section */
+        .camera-section {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .btn-camera {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 16px 32px;
+            font-size: 1.1rem;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-camera:hover {
+            background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
+        }
+
+        .camera-icon {
+            font-size: 1.5rem;
+        }
+
+        .camera-hint {
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        .upload-divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+        }
+
+        .upload-divider::before,
+        .upload-divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .upload-divider span {
+            padding: 0 16px;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .header {
                 flex-direction: column;
                 gap: 12px;
                 text-align: center;
+                padding: 12px 16px;
+            }
+
+            .header h1 {
+                font-size: 1.2rem;
+            }
+
+            .user-info {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .user-name {
+                display: none;
+            }
+
+            .container {
+                padding: 12px;
+            }
+
+            .upload-section {
+                padding: 20px 16px;
+            }
+
+            .upload-section h2 {
+                font-size: 1.1rem;
+                margin-bottom: 16px;
+            }
+
+            .btn-camera {
+                width: 100%;
+                justify-content: center;
+                padding: 14px 20px;
+                font-size: 1rem;
+            }
+
+            .upload-area {
+                padding: 24px 16px;
+            }
+
+            .upload-icon {
+                font-size: 36px;
+            }
+
+            .upload-text {
+                font-size: 0.9rem;
             }
 
             .journal-row {
                 grid-template-columns: 1fr;
+            }
+
+            .journal-field input,
+            .journal-field select {
+                font-size: 16px; /* iOS zoom prevention */
             }
 
             .upload-actions,
@@ -805,9 +909,123 @@
                 flex-direction: column;
             }
 
+            .result-actions .btn {
+                width: 100%;
+            }
+
+            /* 仕訳一覧テーブルのモバイル対応 */
+            .journals-section {
+                padding: 16px;
+            }
+
+            .journals-section h2 {
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+            }
+
+            .journals-section h2 > div {
+                width: 100%;
+            }
+
+            .journals-section h2 .btn {
+                flex: 1;
+            }
+
             .journals-table {
                 display: block;
                 overflow-x: auto;
+                font-size: 0.85rem;
+            }
+
+            .journals-table th,
+            .journals-table td {
+                padding: 8px 10px;
+                white-space: nowrap;
+            }
+
+            /* モーダルのモバイル対応 */
+            .modal-content,
+            .api-setup-content {
+                width: 95%;
+                max-height: 85vh;
+                margin: 10px;
+            }
+
+            .modal-header,
+            .api-setup-header {
+                padding: 16px;
+            }
+
+            .modal-body,
+            .api-setup-body {
+                padding: 16px;
+            }
+
+            .modal-footer,
+            .api-setup-footer {
+                padding: 12px 16px;
+                flex-wrap: wrap;
+            }
+
+            .detail-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+            }
+
+            .detail-value {
+                text-align: left;
+            }
+
+            .detail-input {
+                width: 100% !important;
+                text-align: left;
+                font-size: 16px; /* iOS zoom prevention */
+            }
+
+            /* ファイルキューのモバイル対応 */
+            .queue-item {
+                padding: 10px;
+            }
+
+            .queue-item-thumb {
+                width: 40px;
+                height: 40px;
+            }
+
+            .queue-item-name {
+                font-size: 0.85rem;
+            }
+
+            /* ボタンのモバイル対応 */
+            .btn {
+                padding: 12px 16px;
+            }
+
+            .btn-settings {
+                padding: 8px 10px;
+                font-size: 0.8rem;
+            }
+
+            .btn-logout {
+                padding: 8px 12px;
+                font-size: 0.8rem;
+            }
+        }
+
+        /* 小さいスマホ向け */
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1rem;
+            }
+
+            .camera-icon {
+                font-size: 1.2rem;
+            }
+
+            .btn-camera span:last-child {
+                font-size: 0.95rem;
             }
         }
     </style>
@@ -843,6 +1061,21 @@
         <!-- Upload Section -->
         <section class="upload-section">
             <h2>領収書をアップロード</h2>
+
+            <!-- カメラ撮影ボタン（スマホ用） -->
+            <div class="camera-section">
+                <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;">
+                <button class="btn btn-camera" id="cameraBtn">
+                    <span class="camera-icon">📷</span>
+                    <span>カメラで撮影</span>
+                </button>
+                <p class="camera-hint">スマートフォンで領収書を撮影</p>
+            </div>
+
+            <div class="upload-divider">
+                <span>または</span>
+            </div>
+
             <div class="upload-area" id="uploadArea">
                 <input type="file" id="fileInput" accept="image/*,.pdf" multiple>
                 <div class="upload-icon">📄</div>
@@ -1131,6 +1364,8 @@
         const loginBtn = document.getElementById('loginBtn');
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
+        const cameraInput = document.getElementById('cameraInput');
+        const cameraBtn = document.getElementById('cameraBtn');
         const fileQueueEl = document.getElementById('fileQueue');
         const queueList = document.getElementById('queueList');
         const queueCount = document.getElementById('queueCount');
@@ -1285,6 +1520,24 @@
         // ===========================================
         // File Upload Functions (複数ファイル対応)
         // ===========================================
+
+        // カメラボタンクリック
+        cameraBtn.addEventListener('click', () => {
+            cameraInput.click();
+        });
+
+        // カメラ撮影後の処理
+        cameraInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            if (files.length > 0) {
+                handleFiles(files);
+                // 撮影後すぐに処理開始
+                setTimeout(() => {
+                    processNextInQueue();
+                }, 500);
+            }
+            cameraInput.value = '';
+        });
 
         // Click to upload
         uploadArea.addEventListener('click', () => {
