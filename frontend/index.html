@@ -456,6 +456,68 @@
             background-color: var(--warning);
         }
 
+        /* File Queue */
+        .queue-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .queue-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--bg-light);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .queue-item.processing {
+            border-color: var(--primary);
+            background: rgba(74, 144, 226, 0.1);
+        }
+
+        .queue-item.done {
+            border-color: var(--success);
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .queue-item-thumb {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .queue-item-info {
+            flex: 1;
+        }
+
+        .queue-item-name {
+            font-weight: 500;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+
+        .queue-item-status {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .queue-item-status.pending { color: var(--warning); }
+        .queue-item-status.processing { color: var(--primary); }
+        .queue-item-status.done { color: var(--success); }
+
+        .queue-item-remove {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 4px;
+        }
+
         /* Hidden */
         .hidden {
             display: none !important;
@@ -517,21 +579,27 @@
         <section class="upload-section">
             <h2>領収書をアップロード</h2>
             <div class="upload-area" id="uploadArea">
-                <input type="file" id="fileInput" accept="image/*,.pdf">
+                <input type="file" id="fileInput" accept="image/*,.pdf" multiple>
                 <div class="upload-icon">📄</div>
                 <p class="upload-text">
                     ファイルをドラッグ&ドロップ<br>
                     または<strong>クリックして選択</strong>
                 </p>
-                <p style="font-size: 0.85rem; color: #999;">対応形式: JPG, PNG, PDF</p>
+                <p style="font-size: 0.85rem; color: #999;">対応形式: JPG, PNG, PDF（複数選択可）</p>
             </div>
-            <div class="file-preview" id="filePreview">
-                <img class="preview-image" id="previewImage" src="" alt="プレビュー">
-                <p class="file-name" id="fileName"></p>
-                <div class="upload-actions">
-                    <button class="btn btn-primary" id="analyzeBtn">仕訳を生成</button>
-                    <button class="btn" style="background: #eee; color: #666;" id="clearBtn">クリア</button>
+            <!-- ファイルキュー -->
+            <div class="file-queue" id="fileQueue" style="display: none;">
+                <h3 style="margin: 24px 0 16px; color: var(--text-dark);">アップロードキュー <span id="queueCount"></span></h3>
+                <div class="queue-list" id="queueList"></div>
+                <div class="upload-actions" style="margin-top: 16px;">
+                    <button class="btn btn-primary" id="processAllBtn">すべて処理開始</button>
+                    <button class="btn" style="background: #eee; color: #666;" id="clearAllBtn">すべてクリア</button>
                 </div>
+            </div>
+            <!-- 現在処理中のファイル -->
+            <div class="file-preview" id="filePreview">
+                <h3 style="margin-bottom: 16px; color: var(--text-dark);">処理中: <span id="currentFileName"></span></h3>
+                <img class="preview-image" id="previewImage" src="" alt="プレビュー">
             </div>
             <div class="loading" id="uploadLoading">
                 <div class="spinner"></div>
@@ -664,7 +732,8 @@
         // State
         // ===========================================
         let currentUser = null;
-        let selectedFile = null;
+        let fileQueue = []; // { file, status: 'pending'|'processing'|'done', dataUrl }
+        let currentProcessingIndex = -1;
 
         // ===========================================
         // DOM Elements
@@ -675,11 +744,14 @@
         const loginBtn = document.getElementById('loginBtn');
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
+        const fileQueueEl = document.getElementById('fileQueue');
+        const queueList = document.getElementById('queueList');
+        const queueCount = document.getElementById('queueCount');
+        const processAllBtn = document.getElementById('processAllBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
         const filePreview = document.getElementById('filePreview');
         const previewImage = document.getElementById('previewImage');
-        const fileName = document.getElementById('fileName');
-        const analyzeBtn = document.getElementById('analyzeBtn');
-        const clearBtn = document.getElementById('clearBtn');
+        const currentFileName = document.getElementById('currentFileName');
         const uploadLoading = document.getElementById('uploadLoading');
         const resultSection = document.getElementById('resultSection');
         const confirmBtn = document.getElementById('confirmBtn');
@@ -801,21 +873,19 @@
         }
 
         // ===========================================
-        // File Upload Functions
+        // File Upload Functions (複数ファイル対応)
         // ===========================================
 
         // Click to upload
         uploadArea.addEventListener('click', () => {
-            if (!selectedFile) {
-                fileInput.click();
-            }
+            fileInput.click();
         });
 
         // File input change
         fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                handleFile(file);
+            const files = Array.from(e.target.files);
+            if (files.length > 0) {
+                handleFiles(files);
             }
         });
 
@@ -833,60 +903,110 @@
         uploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
             uploadArea.classList.remove('dragover');
-            const file = e.dataTransfer.files[0];
-            if (file) {
-                handleFile(file);
+            const files = Array.from(e.dataTransfer.files);
+            if (files.length > 0) {
+                handleFiles(files);
             }
         });
 
-        function handleFile(file) {
-            // Validate file type
+        // 複数ファイルを処理
+        async function handleFiles(files) {
             const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
-            if (!validTypes.includes(file.type)) {
-                showToast('対応していないファイル形式です', 'error');
-                return;
+
+            for (const file of files) {
+                // Validate file type
+                if (!validTypes.includes(file.type)) {
+                    showToast(`${file.name}: 対応していないファイル形式です`, 'error');
+                    continue;
+                }
+
+                // Validate file size (max 10MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    showToast(`${file.name}: ファイルサイズが大きすぎます`, 'error');
+                    continue;
+                }
+
+                // 画像のDataURLを取得
+                let dataUrl = null;
+                if (file.type.startsWith('image/')) {
+                    dataUrl = await readFileAsDataURL(file);
+                }
+
+                // キューに追加
+                fileQueue.push({
+                    file: file,
+                    status: 'pending',
+                    dataUrl: dataUrl
+                });
             }
 
-            // Validate file size (max 10MB)
-            if (file.size > 10 * 1024 * 1024) {
-                showToast('ファイルサイズが大きすぎます（最大10MB）', 'error');
-                return;
-            }
-
-            selectedFile = file;
-            fileName.textContent = file.name;
-
-            // Show preview for images
-            if (file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    previewImage.src = e.target.result;
-                    previewImage.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            } else {
-                previewImage.style.display = 'none';
-            }
-
-            filePreview.classList.add('show');
+            fileInput.value = '';
+            updateQueueDisplay();
+            showToast(`${files.length}件のファイルをキューに追加しました`, 'success');
         }
 
-        // Clear file
-        clearBtn.addEventListener('click', () => {
-            clearFileSelection();
+        // ファイルをDataURLとして読み込む
+        function readFileAsDataURL(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // キュー表示を更新
+        function updateQueueDisplay() {
+            if (fileQueue.length === 0) {
+                fileQueueEl.style.display = 'none';
+                return;
+            }
+
+            fileQueueEl.style.display = 'block';
+            queueCount.textContent = `(${fileQueue.length}件)`;
+
+            queueList.innerHTML = fileQueue.map((item, index) => `
+                <div class="queue-item ${item.status}" data-index="${index}">
+                    ${item.dataUrl
+                        ? `<img class="queue-item-thumb" src="${item.dataUrl}" alt="">`
+                        : `<div class="queue-item-thumb" style="background: #eee; display: flex; align-items: center; justify-content: center;">PDF</div>`
+                    }
+                    <div class="queue-item-info">
+                        <div class="queue-item-name">${item.file.name}</div>
+                        <div class="queue-item-status ${item.status}">
+                            ${item.status === 'pending' ? '待機中' :
+                              item.status === 'processing' ? '処理中...' : '完了'}
+                        </div>
+                    </div>
+                    ${item.status === 'pending' ?
+                        `<button class="queue-item-remove" onclick="removeFromQueue(${index})">×</button>` : ''}
+                </div>
+            `).join('');
+        }
+
+        // キューから削除
+        function removeFromQueue(index) {
+            fileQueue.splice(index, 1);
+            updateQueueDisplay();
+        }
+
+        // すべてクリア
+        clearAllBtn.addEventListener('click', () => {
+            fileQueue = [];
+            currentProcessingIndex = -1;
+            filePreview.classList.remove('show');
+            resultSection.classList.remove('show');
+            updateQueueDisplay();
+            showToast('キューをクリアしました', 'success');
         });
 
-        function clearFileSelection() {
-            selectedFile = null;
-            fileInput.value = '';
-            filePreview.classList.remove('show');
-            previewImage.src = '';
-            previewImage.style.display = 'none';
-            fileName.textContent = '';
-        }
+        // すべて処理開始
+        processAllBtn.addEventListener('click', () => {
+            processNextInQueue();
+        });
 
         // ===========================================
         // OCR Simulation (MVP版: ダミーデータ生成)
+        // 後でGoogle Cloud Visionに置き換え
         // ===========================================
         function simulateOCR(filename) {
             // サンプル金額を生成
@@ -913,29 +1033,56 @@
                 tax_rate: 10,
                 debit_account: debitAccount,
                 credit_account: '現金',
-                description: `領収書: ${filename.replace(/\.[^.]+$/, '')}`
+                description: `領収書: ${filename.replace(/\.[^.]+$/, '')}`,
+                vendor_name: '',
+                registration_number: ''
             };
         }
 
         // ===========================================
-        // Firestore Functions
+        // キュー処理
         // ===========================================
 
-        // Analyze receipt (simulate OCR)
-        analyzeBtn.addEventListener('click', async () => {
-            if (!selectedFile) {
-                showToast('ファイルを選択してください', 'warning');
+        // 次のファイルを処理
+        async function processNextInQueue() {
+            // 待機中のファイルを探す
+            const pendingIndex = fileQueue.findIndex(item => item.status === 'pending');
+
+            if (pendingIndex === -1) {
+                // 全て完了
+                showToast('すべての処理が完了しました', 'success');
+                filePreview.classList.remove('show');
+                resultSection.classList.remove('show');
+                // 完了したアイテムをクリア
+                fileQueue = fileQueue.filter(item => item.status !== 'done');
+                updateQueueDisplay();
+                loadJournals();
                 return;
             }
 
-            analyzeBtn.disabled = true;
+            currentProcessingIndex = pendingIndex;
+            const currentItem = fileQueue[pendingIndex];
+            currentItem.status = 'processing';
+            updateQueueDisplay();
+
+            // プレビュー表示
+            filePreview.classList.add('show');
+            currentFileName.textContent = currentItem.file.name;
+            if (currentItem.dataUrl) {
+                previewImage.src = currentItem.dataUrl;
+                previewImage.style.display = 'block';
+            } else {
+                previewImage.style.display = 'none';
+            }
+
+            // OCR処理
             uploadLoading.classList.add('show');
 
             try {
-                // Simulate OCR processing
+                // Simulate OCR processing (後でCloud Visionに置き換え)
                 await new Promise(resolve => setTimeout(resolve, 1000));
 
-                const ocrResult = simulateOCR(selectedFile.name);
+                const ocrResult = simulateOCR(currentItem.file.name);
 
                 // Fill form with extracted data
                 document.getElementById('journalDate').value = ocrResult.date;
@@ -947,21 +1094,28 @@
 
                 // Show result section
                 resultSection.classList.add('show');
-                showToast('領収書の解析が完了しました', 'success');
 
             } catch (error) {
                 console.error('OCR error:', error);
                 showToast('解析に失敗しました', 'error');
+                currentItem.status = 'pending';
+                updateQueueDisplay();
             } finally {
-                analyzeBtn.disabled = false;
                 uploadLoading.classList.remove('show');
             }
-        });
+        }
 
-        // Cancel result
+        // Cancel result - スキップして次へ
         cancelResultBtn.addEventListener('click', () => {
+            if (currentProcessingIndex >= 0 && fileQueue[currentProcessingIndex]) {
+                // スキップしたファイルを削除
+                fileQueue.splice(currentProcessingIndex, 1);
+                updateQueueDisplay();
+            }
             resultSection.classList.remove('show');
-            clearFileSelection();
+            filePreview.classList.remove('show');
+            // 次のファイルを処理
+            processNextInQueue();
         });
 
         // Save journal to Firestore
@@ -970,6 +1124,8 @@
             confirmLoading.classList.add('show');
 
             try {
+                const currentItem = fileQueue[currentProcessingIndex];
+
                 const journalData = {
                     user_id: currentUser.uid,
                     date: document.getElementById('journalDate').value,
@@ -979,7 +1135,7 @@
                     credit_account: document.getElementById('journalCredit').value,
                     description: document.getElementById('journalDescription').value,
                     status: 'confirmed',
-                    receipt_filename: selectedFile ? selectedFile.name : null,
+                    receipt_filename: currentItem ? currentItem.file.name : null,
                     created_at: firebase.firestore.FieldValue.serverTimestamp(),
                     updated_at: firebase.firestore.FieldValue.serverTimestamp()
                 };
@@ -989,12 +1145,18 @@
 
                 showToast('仕訳を保存しました', 'success');
 
+                // マーク完了
+                if (currentItem) {
+                    currentItem.status = 'done';
+                    updateQueueDisplay();
+                }
+
                 // Reset
                 resultSection.classList.remove('show');
-                clearFileSelection();
+                filePreview.classList.remove('show');
 
-                // Refresh list
-                loadJournals();
+                // 次のファイルを処理
+                processNextInQueue();
 
             } catch (error) {
                 console.error('Save error:', error);
