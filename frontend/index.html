@@ -659,6 +659,18 @@
                         <input type="text" id="journalDescription" placeholder="取引内容">
                     </div>
                 </div>
+                <div class="journal-row">
+                    <div class="journal-field">
+                        <label>登録番号（インボイス）</label>
+                        <input type="text" id="journalRegistrationNumber" placeholder="T0000000000000">
+                    </div>
+                    <div class="journal-field">
+                        <!-- 空白 -->
+                    </div>
+                    <div class="journal-field">
+                        <!-- 空白 -->
+                    </div>
+                </div>
             </div>
             <div class="result-actions">
                 <button class="btn" style="background: #eee; color: #666;" id="cancelResultBtn">キャンセル</button>
@@ -1005,38 +1017,161 @@
         });
 
         // ===========================================
-        // OCR Simulation (MVP版: ダミーデータ生成)
-        // 後でGoogle Cloud Visionに置き換え
+        // Google Cloud Vision OCR
         // ===========================================
-        function simulateOCR(filename) {
-            // サンプル金額を生成
-            const amounts = [980, 1280, 1980, 2500, 3300, 5500, 8800, 11000, 15000];
-            const amount = amounts[Math.floor(Math.random() * amounts.length)];
+        const VISION_API_KEY = 'AIzaSyBbF7J2nZn5L1_QtLK0os3Em1CZ9YWZf_E';
+        const VISION_API_URL = `https://vision.googleapis.com/v1/images:annotate?key=${VISION_API_KEY}`;
 
-            // 科目を推定（ファイル名から）
-            const lowerName = filename.toLowerCase();
-            let debitAccount = '消耗品費';
-            if (lowerName.includes('タクシー') || lowerName.includes('電車') || lowerName.includes('交通')) {
-                debitAccount = '旅費交通費';
-            } else if (lowerName.includes('会議') || lowerName.includes('カフェ')) {
-                debitAccount = '会議費';
-            } else if (lowerName.includes('接待') || lowerName.includes('贈答')) {
-                debitAccount = '交際費';
+        // Cloud Vision APIでOCR実行
+        async function performOCR(dataUrl) {
+            // DataURLからbase64部分を抽出
+            const base64Image = dataUrl.split(',')[1];
+
+            const requestBody = {
+                requests: [{
+                    image: { content: base64Image },
+                    features: [{ type: 'TEXT_DETECTION', maxResults: 1 }]
+                }]
+            };
+
+            const response = await fetch(VISION_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Vision API error: ${response.status}`);
             }
 
-            // 今日の日付
-            const today = new Date().toISOString().split('T')[0];
+            const result = await response.json();
+            const textAnnotations = result.responses[0]?.textAnnotations;
 
-            return {
-                date: today,
-                amount: amount,
+            if (!textAnnotations || textAnnotations.length === 0) {
+                return null;
+            }
+
+            // 全文テキストを取得
+            const fullText = textAnnotations[0].description;
+            return parseReceiptText(fullText);
+        }
+
+        // 領収書テキストから情報を抽出
+        function parseReceiptText(text) {
+            const lines = text.split('\n');
+            const result = {
+                date: '',
+                amount: 0,
                 tax_rate: 10,
-                debit_account: debitAccount,
+                debit_account: '消耗品費',
                 credit_account: '現金',
-                description: `領収書: ${filename.replace(/\.[^.]+$/, '')}`,
+                description: '',
                 vendor_name: '',
                 registration_number: ''
             };
+
+            // 日付パターン（様々な形式に対応）
+            const datePatterns = [
+                /(\d{4})[\/\-年](\d{1,2})[\/\-月](\d{1,2})/,  // 2024/01/15, 2024-01-15, 2024年1月15日
+                /令和\s*(\d+)\s*年\s*(\d+)\s*月\s*(\d+)/,     // 令和6年1月15日
+                /R(\d+)[\.\/](\d+)[\.\/](\d+)/,               // R6.1.15
+            ];
+
+            // 金額パターン
+            const amountPatterns = [
+                /合計[^\d]*[¥￥]?\s*([\d,]+)/i,
+                /総額[^\d]*[¥￥]?\s*([\d,]+)/i,
+                /計[^\d]*[¥￥]?\s*([\d,]+)/i,
+                /[¥￥]\s*([\d,]+)/,
+                /(\d{1,3}(?:,\d{3})+)円/,
+                /(\d+)円/
+            ];
+
+            // 登録番号パターン（インボイス）
+            const registrationPattern = /T\d{13}/;
+
+            // 税率パターン
+            const taxPatterns = [
+                /軽減.*8\s*%/i,
+                /8\s*%.*対象/i,
+                /\*.*8%/
+            ];
+
+            // テキスト全体を解析
+            const fullText = text;
+
+            // 日付抽出
+            for (const pattern of datePatterns) {
+                const match = fullText.match(pattern);
+                if (match) {
+                    if (pattern.toString().includes('令和')) {
+                        const year = 2018 + parseInt(match[1]);
+                        result.date = `${year}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
+                    } else if (pattern.toString().includes('R')) {
+                        const year = 2018 + parseInt(match[1]);
+                        result.date = `${year}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
+                    } else {
+                        result.date = `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
+                    }
+                    break;
+                }
+            }
+
+            // 日付が取得できなかった場合は今日の日付
+            if (!result.date) {
+                result.date = new Date().toISOString().split('T')[0];
+            }
+
+            // 金額抽出（最も大きい金額を合計とみなす）
+            let maxAmount = 0;
+            for (const pattern of amountPatterns) {
+                const matches = fullText.matchAll(new RegExp(pattern, 'gi'));
+                for (const match of matches) {
+                    const amount = parseInt(match[1].replace(/,/g, ''));
+                    if (amount > maxAmount && amount < 10000000) { // 1000万円未満
+                        maxAmount = amount;
+                    }
+                }
+            }
+            result.amount = maxAmount;
+
+            // 登録番号抽出
+            const regMatch = fullText.match(registrationPattern);
+            if (regMatch) {
+                result.registration_number = regMatch[0];
+            }
+
+            // 税率判定（軽減税率のキーワードがあれば8%）
+            for (const pattern of taxPatterns) {
+                if (pattern.test(fullText)) {
+                    result.tax_rate = 8;
+                    break;
+                }
+            }
+
+            // 店舗名抽出（最初の行を店舗名とする）
+            if (lines.length > 0) {
+                result.vendor_name = lines[0].trim().substring(0, 30);
+                result.description = result.vendor_name;
+            }
+
+            // 勘定科目推定
+            const lowerText = fullText.toLowerCase();
+            if (/タクシー|電車|交通|駐車|高速|ＪＲ|jr|バス/.test(lowerText)) {
+                result.debit_account = '旅費交通費';
+            } else if (/カフェ|コーヒー|会議|ミーティング/.test(lowerText)) {
+                result.debit_account = '会議費';
+            } else if (/接待|贈答|お祝い|御礼/.test(lowerText)) {
+                result.debit_account = '交際費';
+            } else if (/電話|通信|インターネット|携帯/.test(lowerText)) {
+                result.debit_account = '通信費';
+            } else if (/電気|ガス|水道|光熱/.test(lowerText)) {
+                result.debit_account = '水道光熱費';
+            } else if (/文具|事務|コピー|印刷/.test(lowerText)) {
+                result.debit_account = '消耗品費';
+            }
+
+            return result;
         }
 
         // ===========================================
@@ -1079,10 +1214,27 @@
             uploadLoading.classList.add('show');
 
             try {
-                // Simulate OCR processing (後でCloud Visionに置き換え)
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                // Cloud Vision APIでOCR実行
+                let ocrResult = null;
 
-                const ocrResult = simulateOCR(currentItem.file.name);
+                if (currentItem.dataUrl) {
+                    ocrResult = await performOCR(currentItem.dataUrl);
+                }
+
+                // OCR失敗時はデフォルト値を使用
+                if (!ocrResult) {
+                    ocrResult = {
+                        date: new Date().toISOString().split('T')[0],
+                        amount: 0,
+                        tax_rate: 10,
+                        debit_account: '消耗品費',
+                        credit_account: '現金',
+                        description: currentItem.file.name,
+                        vendor_name: '',
+                        registration_number: ''
+                    };
+                    showToast('テキストを検出できませんでした。手動で入力してください。', 'warning');
+                }
 
                 // Fill form with extracted data
                 document.getElementById('journalDate').value = ocrResult.date;
@@ -1091,9 +1243,14 @@
                 document.getElementById('journalDebit').value = ocrResult.debit_account;
                 document.getElementById('journalCredit').value = ocrResult.credit_account;
                 document.getElementById('journalDescription').value = ocrResult.description;
+                document.getElementById('journalRegistrationNumber').value = ocrResult.registration_number || '';
 
                 // Show result section
                 resultSection.classList.add('show');
+
+                if (ocrResult.amount > 0) {
+                    showToast('領収書を解析しました', 'success');
+                }
 
             } catch (error) {
                 console.error('OCR error:', error);
@@ -1134,6 +1291,7 @@
                     debit_account: document.getElementById('journalDebit').value,
                     credit_account: document.getElementById('journalCredit').value,
                     description: document.getElementById('journalDescription').value,
+                    registration_number: document.getElementById('journalRegistrationNumber').value || '',
                     status: 'confirmed',
                     receipt_filename: currentItem ? currentItem.file.name : null,
                     created_at: firebase.firestore.FieldValue.serverTimestamp(),
