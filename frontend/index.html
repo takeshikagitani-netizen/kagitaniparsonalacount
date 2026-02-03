@@ -774,11 +774,12 @@
                 </div>
                 <div class="journal-row">
                     <div class="journal-field">
-                        <label>登録番号（インボイス）</label>
-                        <input type="text" id="journalRegistrationNumber" placeholder="T0000000000000">
+                        <label>社名（店舗名）</label>
+                        <input type="text" id="journalVendorName" placeholder="例: ダイソー">
                     </div>
                     <div class="journal-field">
-                        <!-- 空白 -->
+                        <label>登録番号（インボイス）</label>
+                        <input type="text" id="journalRegistrationNumber" placeholder="T0000000000000">
                     </div>
                     <div class="journal-field">
                         <!-- 空白 -->
@@ -864,6 +865,10 @@
                 <div class="detail-row">
                     <span class="detail-label">摘要</span>
                     <span class="detail-value" id="detailDescription">-</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">社名</span>
+                    <span class="detail-value" id="detailVendorName">-</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">登録番号</span>
@@ -1433,6 +1438,7 @@
                 document.getElementById('journalCredit').value = ocrResult.credit_account;
                 document.getElementById('journalDescription').value = ocrResult.description;
                 document.getElementById('journalRegistrationNumber').value = ocrResult.registration_number || '';
+                document.getElementById('journalVendorName').value = ocrResult.vendor_name || '';
 
                 // Show result section
                 resultSection.classList.add('show');
@@ -1480,6 +1486,7 @@
                     debit_account: document.getElementById('journalDebit').value,
                     credit_account: document.getElementById('journalCredit').value,
                     description: document.getElementById('journalDescription').value,
+                    vendor_name: document.getElementById('journalVendorName').value || '',
                     registration_number: document.getElementById('journalRegistrationNumber').value || '',
                     status: 'confirmed',
                     receipt_filename: currentItem ? currentItem.file.name : null,
@@ -1639,6 +1646,7 @@
             document.getElementById('detailDebit').textContent = journal.debit_account || '-';
             document.getElementById('detailCredit').textContent = journal.credit_account || '-';
             document.getElementById('detailDescription').textContent = journal.description || '-';
+            document.getElementById('detailVendorName').textContent = journal.vendor_name || '-';
             document.getElementById('detailRegistration').textContent = journal.registration_number || '-';
             document.getElementById('detailFilename').textContent = journal.receipt_filename || '-';
 
@@ -1724,6 +1732,8 @@
                 </select>`;
             document.getElementById('detailDescription').innerHTML =
                 `<input type="text" class="detail-input" id="editDescription" value="${journal.description || ''}" style="width: 200px;">`;
+            document.getElementById('detailVendorName').innerHTML =
+                `<input type="text" class="detail-input" id="editVendorName" value="${journal.vendor_name || ''}" style="width: 200px;" placeholder="例: ダイソー">`;
             document.getElementById('detailRegistration').innerHTML =
                 `<input type="text" class="detail-input" id="editRegistration" value="${journal.registration_number || ''}" placeholder="T0000000000000">`;
 
@@ -1767,6 +1777,7 @@
                     debit_account: document.getElementById('editDebit').value,
                     credit_account: document.getElementById('editCredit').value,
                     description: document.getElementById('editDescription').value,
+                    vendor_name: document.getElementById('editVendorName').value,
                     registration_number: document.getElementById('editRegistration').value,
                     updated_at: firebase.firestore.FieldValue.serverTimestamp()
                 };
@@ -1824,6 +1835,7 @@
                 '金額',
                 '税区分',
                 '摘要',
+                '社名',
                 '登録番号',
                 'ファイル名',
                 'ステータス'
@@ -1841,6 +1853,7 @@
                     journal.amount || 0,
                     `${journal.tax_rate || 10}%`,
                     escapeCSV(journal.description || ''),
+                    escapeCSV(journal.vendor_name || ''),
                     journal.registration_number || '',
                     escapeCSV(journal.receipt_filename || ''),
                     journal.status === 'confirmed' ? '確定済' : '未確定'
