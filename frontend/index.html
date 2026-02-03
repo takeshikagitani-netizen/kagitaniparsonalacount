@@ -527,6 +527,35 @@
             word-break: break-all;
         }
 
+        /* Edit mode styles */
+        .detail-input {
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            width: 180px;
+            text-align: right;
+        }
+
+        .detail-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .detail-row.edit-mode {
+            align-items: center;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
         .modal-footer {
             display: flex;
             justify-content: space-between;
@@ -770,7 +799,10 @@
         <section class="journals-section">
             <h2>
                 <span>仕訳一覧</span>
-                <button class="btn btn-primary" id="refreshBtn">更新</button>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-success" id="csvDownloadBtn">CSVダウンロード</button>
+                    <button class="btn btn-primary" id="refreshBtn">更新</button>
+                </div>
             </h2>
             <div class="loading" id="listLoading">
                 <div class="spinner"></div>
@@ -848,7 +880,12 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-danger" id="deleteJournalBtn">削除</button>
-                <button class="btn btn-primary" onclick="closeDetailModal()">閉じる</button>
+                <div>
+                    <button class="btn btn-secondary" id="editJournalBtn">編集</button>
+                    <button class="btn btn-success hidden" id="saveEditBtn">保存</button>
+                    <button class="btn btn-primary" id="closeDetailBtn" onclick="closeDetailModal()">閉じる</button>
+                    <button class="btn hidden" id="cancelEditBtn" style="background: #eee; color: #666;">キャンセル</button>
+                </div>
             </div>
         </div>
     </div>
@@ -916,6 +953,12 @@
         const toast = document.getElementById('toast');
         const detailModal = document.getElementById('detailModal');
         const deleteJournalBtn = document.getElementById('deleteJournalBtn');
+        const editJournalBtn = document.getElementById('editJournalBtn');
+        const saveEditBtn = document.getElementById('saveEditBtn');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        const closeDetailBtn = document.getElementById('closeDetailBtn');
+        const csvDownloadBtn = document.getElementById('csvDownloadBtn');
+        let isEditMode = false;
 
         // ===========================================
         // Auth Functions
@@ -1611,12 +1654,6 @@
             detailModal.classList.add('show');
         }
 
-        // 詳細モーダルを閉じる
-        function closeDetailModal() {
-            detailModal.classList.remove('show');
-            selectedJournalId = null;
-        }
-
         // モーダル外クリックで閉じる
         detailModal.addEventListener('click', (e) => {
             if (e.target === detailModal) {
@@ -1642,6 +1679,203 @@
                 showToast('削除に失敗しました: ' + error.message, 'error');
             }
         });
+
+        // ===========================================
+        // 編集モード機能
+        // ===========================================
+
+        // 編集モードに切り替え
+        editJournalBtn.addEventListener('click', () => {
+            const journal = journalsData.find(j => j.id === selectedJournalId);
+            if (!journal) return;
+
+            isEditMode = true;
+
+            // 各フィールドを入力可能に変更
+            document.getElementById('detailDate').innerHTML =
+                `<input type="date" class="detail-input" id="editDate" value="${journal.date || ''}">`;
+            document.getElementById('detailAmount').innerHTML =
+                `<input type="number" class="detail-input" id="editAmount" value="${journal.amount || 0}">`;
+            document.getElementById('detailTax').innerHTML =
+                `<select class="detail-input" id="editTax">
+                    <option value="10" ${journal.tax_rate === 10 ? 'selected' : ''}>10%</option>
+                    <option value="8" ${journal.tax_rate === 8 ? 'selected' : ''}>8%</option>
+                    <option value="0" ${journal.tax_rate === 0 ? 'selected' : ''}>非課税</option>
+                </select>`;
+            document.getElementById('detailDebit').innerHTML =
+                `<select class="detail-input" id="editDebit">
+                    <option value="消耗品費" ${journal.debit_account === '消耗品費' ? 'selected' : ''}>消耗品費</option>
+                    <option value="旅費交通費" ${journal.debit_account === '旅費交通費' ? 'selected' : ''}>旅費交通費</option>
+                    <option value="交際費" ${journal.debit_account === '交際費' ? 'selected' : ''}>交際費</option>
+                    <option value="会議費" ${journal.debit_account === '会議費' ? 'selected' : ''}>会議費</option>
+                    <option value="通信費" ${journal.debit_account === '通信費' ? 'selected' : ''}>通信費</option>
+                    <option value="水道光熱費" ${journal.debit_account === '水道光熱費' ? 'selected' : ''}>水道光熱費</option>
+                    <option value="地代家賃" ${journal.debit_account === '地代家賃' ? 'selected' : ''}>地代家賃</option>
+                    <option value="広告宣伝費" ${journal.debit_account === '広告宣伝費' ? 'selected' : ''}>広告宣伝費</option>
+                    <option value="福利厚生費" ${journal.debit_account === '福利厚生費' ? 'selected' : ''}>福利厚生費</option>
+                    <option value="雑費" ${journal.debit_account === '雑費' ? 'selected' : ''}>雑費</option>
+                </select>`;
+            document.getElementById('detailCredit').innerHTML =
+                `<select class="detail-input" id="editCredit">
+                    <option value="現金" ${journal.credit_account === '現金' ? 'selected' : ''}>現金</option>
+                    <option value="普通預金" ${journal.credit_account === '普通預金' ? 'selected' : ''}>普通預金</option>
+                    <option value="クレジットカード" ${journal.credit_account === 'クレジットカード' ? 'selected' : ''}>クレジットカード</option>
+                    <option value="未払金" ${journal.credit_account === '未払金' ? 'selected' : ''}>未払金</option>
+                </select>`;
+            document.getElementById('detailDescription').innerHTML =
+                `<input type="text" class="detail-input" id="editDescription" value="${journal.description || ''}" style="width: 200px;">`;
+            document.getElementById('detailRegistration').innerHTML =
+                `<input type="text" class="detail-input" id="editRegistration" value="${journal.registration_number || ''}" placeholder="T0000000000000">`;
+
+            // ボタン表示切替
+            editJournalBtn.classList.add('hidden');
+            closeDetailBtn.classList.add('hidden');
+            deleteJournalBtn.classList.add('hidden');
+            saveEditBtn.classList.remove('hidden');
+            cancelEditBtn.classList.remove('hidden');
+        });
+
+        // 編集をキャンセル
+        cancelEditBtn.addEventListener('click', () => {
+            exitEditMode();
+            // 元のデータを再表示
+            showJournalDetail(selectedJournalId);
+        });
+
+        // 編集モードを終了
+        function exitEditMode() {
+            isEditMode = false;
+            editJournalBtn.classList.remove('hidden');
+            closeDetailBtn.classList.remove('hidden');
+            deleteJournalBtn.classList.remove('hidden');
+            saveEditBtn.classList.add('hidden');
+            cancelEditBtn.classList.add('hidden');
+        }
+
+        // 編集を保存
+        saveEditBtn.addEventListener('click', async () => {
+            if (!selectedJournalId) return;
+
+            saveEditBtn.disabled = true;
+            saveEditBtn.textContent = '保存中...';
+
+            try {
+                const updateData = {
+                    date: document.getElementById('editDate').value,
+                    amount: parseInt(document.getElementById('editAmount').value) || 0,
+                    tax_rate: parseInt(document.getElementById('editTax').value),
+                    debit_account: document.getElementById('editDebit').value,
+                    credit_account: document.getElementById('editCredit').value,
+                    description: document.getElementById('editDescription').value,
+                    registration_number: document.getElementById('editRegistration').value,
+                    updated_at: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                await db.collection('journals').doc(selectedJournalId).update(updateData);
+                showToast('変更を保存しました', 'success');
+
+                // ローカルデータも更新
+                const journalIndex = journalsData.findIndex(j => j.id === selectedJournalId);
+                if (journalIndex !== -1) {
+                    journalsData[journalIndex] = { ...journalsData[journalIndex], ...updateData };
+                }
+
+                exitEditMode();
+                closeDetailModal();
+                loadJournals();
+
+            } catch (error) {
+                console.error('Update error:', error);
+                showToast('保存に失敗しました: ' + error.message, 'error');
+            } finally {
+                saveEditBtn.disabled = false;
+                saveEditBtn.textContent = '保存';
+            }
+        });
+
+        // モーダルを閉じるときは編集モードも終了
+        function closeDetailModal() {
+            detailModal.classList.remove('show');
+            selectedJournalId = null;
+            if (isEditMode) {
+                exitEditMode();
+            }
+        }
+
+        // ===========================================
+        // CSVダウンロード機能
+        // ===========================================
+
+        csvDownloadBtn.addEventListener('click', () => {
+            if (journalsData.length === 0) {
+                showToast('ダウンロードするデータがありません', 'warning');
+                return;
+            }
+
+            downloadCSV();
+        });
+
+        function downloadCSV() {
+            // CSVヘッダー
+            const headers = [
+                '日付',
+                '借方科目',
+                '貸方科目',
+                '金額',
+                '税区分',
+                '摘要',
+                '登録番号',
+                'ファイル名',
+                'ステータス'
+            ];
+
+            // CSVデータを生成
+            const csvRows = [];
+            csvRows.push(headers.join(','));
+
+            journalsData.forEach(journal => {
+                const row = [
+                    journal.date || '',
+                    journal.debit_account || '',
+                    journal.credit_account || '',
+                    journal.amount || 0,
+                    `${journal.tax_rate || 10}%`,
+                    escapeCSV(journal.description || ''),
+                    journal.registration_number || '',
+                    escapeCSV(journal.receipt_filename || ''),
+                    journal.status === 'confirmed' ? '確定済' : '未確定'
+                ];
+                csvRows.push(row.join(','));
+            });
+
+            const csvContent = csvRows.join('\n');
+
+            // BOM付きUTF-8でダウンロード（Excel対応）
+            const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+            const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+
+            // ダウンロードリンクを作成
+            const link = document.createElement('a');
+            link.href = url;
+            const today = new Date().toISOString().split('T')[0];
+            link.download = `仕訳一覧_${today}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            showToast('CSVをダウンロードしました', 'success');
+        }
+
+        // CSV用エスケープ（カンマや改行を含む場合は引用符で囲む）
+        function escapeCSV(str) {
+            if (!str) return '';
+            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                return `"${str.replace(/"/g, '""')}"`;
+            }
+            return str;
+        }
     </script>
 </body>
 </html>
