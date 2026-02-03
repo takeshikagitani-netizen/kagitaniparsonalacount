@@ -593,6 +593,7 @@
                 <div class="queue-list" id="queueList"></div>
                 <div class="upload-actions" style="margin-top: 16px;">
                     <button class="btn btn-primary" id="processAllBtn">すべて処理開始</button>
+                    <button class="btn btn-primary" id="addMoreBtn" style="background: var(--success);">+ ファイルを追加</button>
                     <button class="btn" style="background: #eee; color: #666;" id="clearAllBtn">すべてクリア</button>
                 </div>
             </div>
@@ -760,6 +761,7 @@
         const queueList = document.getElementById('queueList');
         const queueCount = document.getElementById('queueCount');
         const processAllBtn = document.getElementById('processAllBtn');
+        const addMoreBtn = document.getElementById('addMoreBtn');
         const clearAllBtn = document.getElementById('clearAllBtn');
         const filePreview = document.getElementById('filePreview');
         const previewImage = document.getElementById('previewImage');
@@ -1000,6 +1002,11 @@
             fileQueue.splice(index, 1);
             updateQueueDisplay();
         }
+
+        // ファイルを追加
+        addMoreBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
 
         // すべてクリア
         clearAllBtn.addEventListener('click', () => {
