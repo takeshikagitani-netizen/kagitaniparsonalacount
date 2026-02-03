@@ -308,7 +308,7 @@
     <div class="container">
         <div class="manual-header">
             <h1>領収書仕訳システム<br>利用マニュアル</h1>
-            <p>領収書をスマホで撮影 → 自動で仕訳 → CSVで出力</p>
+            <p>スマホで撮影 → 自動で仕訳 → CSVで出力</p>
         </div>
 
         <div class="toc">
@@ -319,18 +319,19 @@
                 <li><a href="#setup">3. 初回セットアップ</a></li>
                 <li><a href="#login">4. ログイン方法</a></li>
                 <li><a href="#upload">5. 領収書のアップロード</a></li>
-                <li><a href="#journal">6. 仕訳の確認・編集</a></li>
-                <li><a href="#list">7. 仕訳一覧の操作</a></li>
-                <li><a href="#csv">8. CSVダウンロード</a></li>
-                <li><a href="#settings">9. 設定変更</a></li>
-                <li><a href="#faq">10. よくある質問</a></li>
+                <li><a href="#mobile">6. スマートフォンでの利用</a></li>
+                <li><a href="#journal">7. 仕訳の確認・編集</a></li>
+                <li><a href="#list">8. 仕訳一覧の操作</a></li>
+                <li><a href="#csv">9. CSVダウンロード</a></li>
+                <li><a href="#settings">10. 設定変更</a></li>
+                <li><a href="#faq">11. よくある質問</a></li>
             </ul>
         </div>
 
         <div class="section" id="overview">
             <h2>1. システム概要</h2>
             <p>
-                領収書仕訳システムは、スマートフォンで撮影した領収書を自動で読み取り、
+                領収書仕訳システムは、スマートフォンやPCから領収書をアップロードして自動で読み取り、
                 仕訳データとして管理できるWebアプリケーションです。
             </p>
 
@@ -340,19 +341,34 @@
                     <li><strong>OCR自動読取：</strong>領収書の日付・金額・店舗名を自動で認識</li>
                     <li><strong>インボイス対応：</strong>登録番号（T+13桁）の自動抽出</li>
                     <li><strong>複数枚一括処理：</strong>複数の領収書をまとめてアップロード</li>
+                    <li><strong>スマホカメラ撮影：</strong>アプリ内から直接カメラ起動して撮影</li>
+                    <li><strong>モバイル対応：</strong>スマートフォンでも快適に操作できるデザイン</li>
                     <li><strong>仕訳編集：</strong>自動認識結果を手動で修正可能</li>
                     <li><strong>CSV出力：</strong>税理士さんへの提出用データを出力</li>
                 </ul>
             </div>
 
             <div class="info-note">
-                <p><strong>対応ブラウザ：</strong>Google Chrome、Safari、Microsoft Edge（最新版）</p>
+                <p><strong>対応環境：</strong>PC（Chrome、Safari、Edge）およびスマートフォン（iOS Safari、Android Chrome）</p>
             </div>
         </div>
 
         <div class="section" id="workflow">
             <h2>2. 基本的な使い方の流れ</h2>
 
+            <h3>ワークフローA：スマートフォンで直接処理（推奨）</h3>
+            <div class="workflow">
+                <div class="workflow-step">1. アプリを開く</div>
+                <span class="workflow-arrow">→</span>
+                <div class="workflow-step">2. カメラで撮影</div>
+                <span class="workflow-arrow">→</span>
+                <div class="workflow-step">3. 仕訳確認・保存</div>
+                <span class="workflow-arrow">→</span>
+                <div class="workflow-step">4. CSVダウンロード</div>
+            </div>
+            <p>スマートフォンで領収書を受け取ったら、その場でアプリを開いてカメラボタンから撮影・登録できます。</p>
+
+            <h3 style="margin-top: 24px;">ワークフローB：PCでまとめて処理</h3>
             <div class="workflow">
                 <div class="workflow-step">1. スマホで撮影</div>
                 <span class="workflow-arrow">→</span>
@@ -364,15 +380,7 @@
                 <span class="workflow-arrow">→</span>
                 <div class="workflow-step">5. CSVダウンロード</div>
             </div>
-
-            <h3>推奨ワークフロー</h3>
-            <ol>
-                <li>領収書をスマートフォンで撮影</li>
-                <li>Googleドライブの専用フォルダに保存</li>
-                <li>PCでGoogleドライブを開き、本システムに領収書をアップロード</li>
-                <li>自動認識された仕訳内容を確認し、必要に応じて修正</li>
-                <li>月末などにCSVをダウンロードして税理士さんに提出</li>
-            </ol>
+            <p>複数の領収書をまとめて処理したい場合は、PCでの操作が効率的です。</p>
 
             <div class="success-note">
                 <p><strong>ポイント：</strong>Googleドライブのフォルダを税理士さんと共有しておくと、さらに便利です。</p>
@@ -501,8 +509,54 @@
             </ul>
         </div>
 
+        <div class="section" id="mobile">
+            <h2>6. スマートフォンでの利用</h2>
+            <p>本システムはスマートフォンに最適化されたデザインを採用しています。外出先でも快適に利用できます。</p>
+
+            <h3>カメラで撮影してアップロード</h3>
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h4>「カメラで撮影」ボタンをタップ</h4>
+                    <p>アプリ画面上部にある緑色の「📷 カメラで撮影」ボタンをタップします。</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h4>領収書を撮影</h4>
+                    <p>スマートフォンのカメラが起動します。領収書全体が写るように撮影してください。</p>
+                    <div class="note">
+                        <p><strong>きれいに撮るコツ：</strong>明るい場所で、領収書を平らに置き、文字がはっきり見えるように撮影してください。</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h4>自動で解析開始</h4>
+                    <p>撮影後、自動的にOCR解析が始まります。完了すると仕訳入力画面が表示されます。</p>
+                </div>
+            </div>
+
+            <h3>モバイル画面の特徴</h3>
+            <div class="feature-box">
+                <ul>
+                    <li><strong>カード形式の仕訳一覧：</strong>スマホ画面でも見やすいカードレイアウト</li>
+                    <li><strong>タッチ操作に最適化：</strong>大きなボタンとタッチしやすい操作エリア</li>
+                    <li><strong>縦スクロールで完結：</strong>横スクロール不要で操作が簡単</li>
+                </ul>
+            </div>
+
+            <div class="success-note">
+                <p><strong>おすすめ：</strong>外出先で領収書をもらったら、すぐにアプリを開いて撮影・登録すると、紛失の心配がありません。</p>
+            </div>
+        </div>
+
         <div class="section" id="journal">
-            <h2>6. 仕訳の確認・編集</h2>
+            <h2>7. 仕訳の確認・編集</h2>
 
             <p>領収書をアップロードすると、OCRで自動的に以下の項目が読み取られます。</p>
 
@@ -558,7 +612,7 @@
         </div>
 
         <div class="section" id="list">
-            <h2>7. 仕訳一覧の操作</h2>
+            <h2>8. 仕訳一覧の操作</h2>
 
             <p>保存した仕訳は「仕訳一覧」に表示されます。</p>
 
@@ -598,7 +652,7 @@
         </div>
 
         <div class="section" id="csv">
-            <h2>8. CSVダウンロード</h2>
+            <h2>9. CSVダウンロード</h2>
 
             <p>仕訳データをCSVファイルとしてダウンロードできます。</p>
 
@@ -638,7 +692,7 @@
         </div>
 
         <div class="section" id="settings">
-            <h2>9. 設定変更</h2>
+            <h2>10. 設定変更</h2>
 
             <h3>設定画面を開く</h3>
             <p>画面右上の「⚙️ 設定」ボタンをクリックします。</p>
@@ -651,10 +705,10 @@
         </div>
 
         <div class="section" id="faq">
-            <h2>10. よくある質問</h2>
+            <h2>11. よくある質問</h2>
 
             <h3>Q. スマートフォンから直接使えますか？</h3>
-            <p>A. PCでの利用を推奨しています。スマートフォンでも動作しますが、画面が小さく操作しづらい場合があります。</p>
+            <p>A. はい、スマートフォンに最適化されたデザインで快適にご利用いただけます。「カメラで撮影」ボタンから直接領収書を撮影して登録できます。</p>
 
             <h3>Q. 領収書の画像はどこに保存されますか？</h3>
             <p>A. 画像自体はサーバーに保存されません。OCR処理のみ行い、抽出されたテキストデータのみが保存されます。元の画像はお客様のGoogleドライブ等で管理してください。</p>
@@ -676,6 +730,12 @@
 
             <h3>Q. APIキーを紛失した場合は？</h3>
             <p>A. Google Cloud Consoleから新しいAPIキーを作成し、設定画面で更新してください。</p>
+
+            <h3>Q. スマホのカメラボタンが反応しない場合は？</h3>
+            <p>A. ブラウザがカメラへのアクセスをブロックしている可能性があります。ブラウザの設定でカメラへのアクセスを許可してください。</p>
+
+            <h3>Q. スマホで仕訳一覧が見づらい場合は？</h3>
+            <p>A. 仕訳一覧はスマホではカード形式で表示されます。各カードをタップすると詳細を確認・編集できます。</p>
         </div>
 
         <div class="section">
