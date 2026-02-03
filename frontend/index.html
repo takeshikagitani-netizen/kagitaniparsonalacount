@@ -813,6 +813,7 @@
                 <thead>
                     <tr>
                         <th>日付</th>
+                        <th>社名</th>
                         <th>借方科目</th>
                         <th>貸方科目</th>
                         <th>金額</th>
@@ -1553,6 +1554,7 @@
                     journalsBody.innerHTML = journals.map(journal => `
                         <tr onclick="showJournalDetail('${journal.id}')">
                             <td>${formatDate(journal.date)}</td>
+                            <td>${journal.vendor_name || '-'}</td>
                             <td>${journal.debit_account || '-'}</td>
                             <td>${journal.credit_account || '-'}</td>
                             <td>${formatCurrency(journal.amount || 0)}</td>
@@ -1599,6 +1601,7 @@
                             journalsBody.innerHTML = journals.map(journal => `
                                 <tr onclick="showJournalDetail('${journal.id}')">
                                     <td>${formatDate(journal.date)}</td>
+                                    <td>${journal.vendor_name || '-'}</td>
                                     <td>${journal.debit_account || '-'}</td>
                                     <td>${journal.credit_account || '-'}</td>
                                     <td>${formatCurrency(journal.amount || 0)}</td>
